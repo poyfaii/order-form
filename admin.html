@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-50 text-gray-800 min-h-screen">
 
-  <!-- Login Section -->
+  <!-- 🔐 Login Section -->
   <div id="login-section" class="flex flex-col items-center justify-center min-h-screen">
     <h2 class="text-2xl font-bold mb-4">เข้าสู่ระบบร้านค้า</h2>
     <input id="email" type="email" placeholder="Email" class="border px-3 py-2 mb-2 w-64 rounded" />
@@ -17,18 +17,15 @@
     <p id="login-error" class="text-red-500 mt-2 hidden">เข้าสู่ระบบไม่สำเร็จ</p>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- ✅ Admin Panel -->
   <div id="admin-panel" class="hidden p-6 max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold mb-4">เพิ่ม / แก้ไขสินค้า</h1>
-    
+
     <input id="product-name" type="text" placeholder="ชื่อสินค้า" class="w-full mb-2 p-2 border rounded" />
-    
-    <input id="product-category" type="text" placeholder="หมวดหมู่ (เช่น กล้วย)" class="w-full mb-2 p-2 border rounded" />
-    
-    <textarea id="product-price" placeholder="ราคาหลายขนาด เช่น 500g=80,1kg=150,ลัง=400" class="w-full mb-2 p-2 border rounded"></textarea>
-    
+    <input id="product-category" type="text" placeholder="หมวดหมู่ (เช่น กล้วย, มัน, ขนม)" class="w-full mb-2 p-2 border rounded" />
+    <textarea id="product-price" placeholder="เช่น 500g=80,1kg=150,ลัง=400" class="w-full mb-2 p-2 border rounded"></textarea>
     <input id="product-image" type="file" accept="image/*" class="w-full mb-2" />
-    
+
     <button onclick="saveProduct()" class="bg-blue-600 text-white px-4 py-2 rounded">บันทึกสินค้า</button>
 
     <hr class="my-6" />
@@ -36,12 +33,12 @@
     <div id="product-list" class="space-y-4"></div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- 🔧 Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, get, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
@@ -49,8 +46,8 @@
       databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "orders-3d979",
       storageBucket: "orders-3d979.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef123456"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -79,24 +76,24 @@
     window.saveProduct = async function () {
       const name = document.getElementById('product-name').value.trim();
       const category = document.getElementById('product-category').value.trim();
-      const priceInput = document.getElementById('product-price').value.trim();
+      const priceText = document.getElementById('product-price').value.trim();
       const file = document.getElementById('product-image').files[0];
 
-      if (!name || !category || !priceInput || !file) return alert("กรอกข้อมูลให้ครบ");
+      if (!name || !category || !priceText || !file) return alert("กรุณากรอกข้อมูลให้ครบ");
 
       const price = {};
-      priceInput.split(',').forEach(item => {
-        const [key, value] = item.split('=');
-        price[key.trim()] = parseFloat(value.trim());
+      priceText.split(',').forEach(p => {
+        const [label, val] = p.split('=');
+        if (label && val) price[label.trim()] = parseFloat(val.trim());
       });
 
       const imagePath = `product-images/${Date.now()}_${file.name}`;
-      const imgRef = storageRef(storage, imagePath);
-      await uploadBytes(imgRef, file);
-      const imageUrl = await getDownloadURL(imgRef);
+      const storageRef = sRef(storage, imagePath);
+      await uploadBytes(storageRef, file);
+      const imageUrl = await getDownloadURL(storageRef);
 
-      const productRef = push(ref(db, 'products'));
-      await set(productRef, {
+      const newRef = push(ref(db, 'products'));
+      await set(newRef, {
         name, category, price, imageUrl
       });
 
@@ -107,21 +104,21 @@
     }
 
     function loadProducts() {
-      const listEl = document.getElementById('product-list');
-      const productsRef = ref(db, 'products');
-      onValue(productsRef, snapshot => {
-        listEl.innerHTML = '';
+      const list = document.getElementById('product-list');
+      const prodRef = ref(db, 'products');
+      onValue(prodRef, snapshot => {
+        list.innerHTML = '';
         const data = snapshot.val() || {};
-        Object.entries(data).forEach(([id, product]) => {
+        Object.entries(data).forEach(([id, prod]) => {
           const div = document.createElement('div');
-          div.className = "border p-4 rounded bg-white";
+          div.className = 'border p-4 rounded bg-white';
           div.innerHTML = `
-            <p><strong>${product.name}</strong> (${product.category})</p>
-            <img src="${product.imageUrl}" class="w-24 h-24 object-cover my-2 rounded border" />
-            <p>ราคา: ${Object.entries(product.price).map(([k,v]) => `${k}: ${v}฿`).join(', ')}</p>
-            <button onclick="deleteProduct('${id}')" class="text-red-600 mt-2 underline">ลบสินค้า</button>
+            <p><strong>${prod.name}</strong> (${prod.category})</p>
+            <img src="${prod.imageUrl}" class="w-24 h-24 my-2 rounded border" />
+            <p>ราคา: ${Object.entries(prod.price).map(([k,v]) => `${k}: ${v}฿`).join(', ')}</p>
+            <button onclick="deleteProduct('${id}')" class="text-red-600 underline">ลบสินค้า</button>
           `;
-          listEl.appendChild(div);
+          list.appendChild(div);
         });
       });
     }
