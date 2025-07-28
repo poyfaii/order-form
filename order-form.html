@@ -79,74 +79,70 @@
   <!-- Firebase SDKs -->
     </script>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getDatabase, ref, push, set, get, child } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+  <!-- Firebase SDKs แบบ non-module -->
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
+    authDomain: "orders-3d979.firebaseapp.com",
+    databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "orders-3d979",
+    storageBucket: "orders-3d979.appspot.com",
+    messagingSenderId: "123456789", // <== ใส่เลขจริงจาก Firebase Console
+    appId: "1:123456789:web:4f1b772b853b602cc93e94",
+    measurementId: "G-P5JPR90CX8"
+  };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
-      authDomain: "orders-3d979.firebaseapp.com",
-      databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "orders-3d979",
-      storageBucket: "orders-3d979.appspot.com",
-      messagingSenderId: ". ",
-      appId: "1:. :web:4f1b772b853b602cc93e94",
-      measurementId: "G-P5JPR90CX8"
-    };
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    window.saveOrderToFirebase = async function(order) {
-      try {
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        await set(newOrderRef, order);
-        return true;
-      } catch (error) {
-        console.error("Error saving order:", error);
-        return false;
-      }
+  window.saveOrderToFirebase = async function(order) {
+    try {
+      const orderId = 'ORD' + Date.now();
+      await database.ref('orders/' + orderId).set(order);
+      console.log("✅ Order saved:", orderId);
+      return true;
+    } catch (error) {
+      console.error("❌ Save error:", error);
+      return false;
     }
+  };
 
-    window.getOrdersFromFirebase = async function() {
-      try {
-        const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, 'orders'));
-        if (snapshot.exists()) {
-          return snapshot.val();
-        } else {
-          return {};
-        }
-      } catch (error) {
-        console.error("Error getting orders:", error);
+  window.getOrdersFromFirebase = async function() {
+    try {
+      const snapshot = await database.ref('orders').get();
+      if (snapshot.exists()) {
+        return snapshot.val();
+      } else {
         return {};
       }
+    } catch (error) {
+      console.error("❌ Get error:", error);
+      return {};
     }
+  };
 
-    window.updateOrderInFirebase = async function(orderId, updatedOrder) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, updatedOrder);
-        return true;
-      } catch (error) {
-        console.error("Error updating order:", error);
-        return false;
-      }
+  window.updateOrderInFirebase = async function(orderId, updatedOrder) {
+    try {
+      await database.ref('orders/' + orderId).set(updatedOrder);
+      return true;
+    } catch (error) {
+      console.error("❌ Update error:", error);
+      return false;
     }
+  };
 
-    window.deleteOrderFromFirebase = async function(orderId) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, null);
-        return true;
-      } catch (error) {
-        console.error("Error deleting order:", error);
-        return false;
-      }
+  window.deleteOrderFromFirebase = async function(orderId) {
+    try {
+      await database.ref('orders/' + orderId).remove();
+      return true;
+    } catch (error) {
+      console.error("❌ Delete error:", error);
+      return false;
     }
-  </script>
+  };
+</script>
 
   <style>
     * {
