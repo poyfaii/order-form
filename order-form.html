@@ -87,8 +87,8 @@
       databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "orders-3d979",
       storageBucket: "orders-3d979.appspot.com",
-      messagingSenderId: ". ",
-      appId: "1:. :web:4f1b772b853b602cc93e94",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:4f1b772b853b602cc93e94",
       measurementId: "G-P5JPR90CX8"
     };
 
@@ -96,29 +96,63 @@
     const database = getDatabase(app);
 
     window.saveOrderToFirebase = async function(order) {
+      console.log('saveOrderToFirebase called with order:', order);
+      
+      // Always use localStorage as primary storage for now
       try {
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        await set(newOrderRef, order);
+        console.log('Saving to localStorage...');
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '{}');
+        const orderId = 'ORD' + Date.now();
+        existingOrders[orderId] = order;
+        localStorage.setItem('orders', JSON.stringify(existingOrders));
+        console.log('LocalStorage save successful, orderId:', orderId);
         return true;
-      } catch (error) {
-        console.error("Error saving order:", error);
-        return false;
+      } catch (localError) {
+        console.error("LocalStorage error:", localError);
+        
+        // If localStorage fails, try Firebase as backup
+        try {
+          console.log('LocalStorage failed, trying Firebase...');
+          const ordersRef = ref(database, 'orders');
+          const newOrderRef = push(ordersRef);
+          await set(newOrderRef, order);
+          console.log('Firebase save successful');
+          return true;
+        } catch (firebaseError) {
+          console.error("Firebase error:", firebaseError);
+          return false;
+        }
       }
     }
 
     window.getOrdersFromFirebase = async function() {
+      console.log('getOrdersFromFirebase called');
+      
+      // Try localStorage first
       try {
-        const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, 'orders'));
-        if (snapshot.exists()) {
-          return snapshot.val();
-        } else {
+        console.log('Getting from localStorage...');
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '{}');
+        console.log('LocalStorage get successful, orders count:', Object.keys(localOrders).length);
+        return localOrders;
+      } catch (localError) {
+        console.error("LocalStorage error:", localError);
+        
+        // If localStorage fails, try Firebase
+        try {
+          console.log('LocalStorage failed, trying Firebase...');
+          const dbRef = ref(database);
+          const snapshot = await get(child(dbRef, 'orders'));
+          if (snapshot.exists()) {
+            console.log('Firebase get successful');
+            return snapshot.val();
+          } else {
+            console.log('No Firebase data found');
+            return {};
+          }
+        } catch (firebaseError) {
+          console.error("Firebase error:", firebaseError);
           return {};
         }
-      } catch (error) {
-        console.error("Error getting orders:", error);
-        return {};
       }
     }
 
@@ -151,7 +185,7 @@
     }
     
     body {
-      background: linear-gradient(-45deg, #fef3c7, #fde68a, #fcd34d, #f59e0b, #d97706, #22c55e, #16a34a);
+      background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e2e8f0, #cbd5e1, #94a3b8, #e0f2fe, #b3e5fc);
       background-size: 400% 400%;
       animation: gradient 15s ease infinite;
       min-height: 100vh;
@@ -215,13 +249,13 @@
     }
     
     .honey-gradient {
-      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706, #22c55e);
+      background: linear-gradient(135deg, #e0f2fe, #b3e5fc, #81d4fa, #4fc3f7);
       background-size: 400% 400%;
       animation: gradient 8s ease infinite;
     }
     
     .tropical-gradient {
-      background: linear-gradient(135deg, #22c55e, #16a34a, #15803d, #f59e0b);
+      background: linear-gradient(135deg, #e8f5e8, #c8e6c9, #a5d6a7, #81c784);
       background-size: 400% 400%;
       animation: gradient 10s ease infinite;
     }
@@ -239,7 +273,7 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #f59e0b, #d97706, #22c55e);
+      background: linear-gradient(135deg, #64b5f6, #42a5f5, #2196f3);
       background-size: 200% 200%;
       transition: all 0.4s ease;
       position: relative;
@@ -555,7 +589,7 @@
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">📱</span> เบอร์โทรศัพท์
           </label>
-          <input id="customerPhone" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="กรอกเบอร์โทรศัพท์" />
+          <input id="customerPhone" type="tel" pattern="[0-9]*" inputmode="numeric" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="กรอกเบอร์โทรศัพท์" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
         </div>
         <div class="md:col-span-2 space-y-3">
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
@@ -734,11 +768,11 @@
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <button onclick="generateReceipt()" class="bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 hover:from-blue-600 hover:via-indigo-700 hover:to-purple-700 text-white font-black py-5 px-6 text-lg rounded-2xl premium-shadow transition-all duration-500 transform hover:scale-105 hover:neon-glow">
+        <button onclick="console.log('Receipt button clicked'); confirmGenerateReceipt()" class="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white font-black py-5 px-6 text-lg rounded-2xl premium-shadow transition-all duration-500 transform hover:scale-105 hover:neon-glow">
           <span class="text-2xl mr-3 icon-bounce">📄</span>
           สร้างใบเสร็จ
         </button>
-        <button onclick="saveOrder()" class="bg-gradient-to-r from-purple-500 via-pink-600 to-red-600 hover:from-purple-600 hover:via-pink-700 hover:to-red-700 text-white font-black py-5 px-6 text-lg rounded-2xl premium-shadow transition-all duration-500 transform hover:scale-105 hover:neon-glow">
+        <button onclick="console.log('Save button clicked'); confirmSaveOrder()" class="bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 text-white font-black py-5 px-6 text-lg rounded-2xl premium-shadow transition-all duration-500 transform hover:scale-105 hover:neon-glow">
           <span class="text-2xl mr-3 icon-bounce">💾</span>
           บันทึกออร์เดอร์
         </button>
@@ -1514,10 +1548,37 @@
       showStatus('เพิ่มสินค้าเรียบร้อยแล้ว', 'success');
     }
 
+    function confirmRemoveItem(id) {
+      if (confirm('คุณต้องการลบสินค้านี้หรือไม่?')) {
+        removeItem(id);
+      }
+    }
+
     function removeItem(id) {
       items = items.filter(item => item.id !== id);
       updateItemList();
       showStatus('ลบสินค้าเรียบร้อยแล้ว', 'success');
+    }
+
+    function editItem(id) {
+      const item = items.find(item => item.id === id);
+      if (!item) return;
+
+      // Fill form with item data
+      document.getElementById('productName').value = item.name;
+      document.getElementById('productSize').value = item.size || '';
+      document.getElementById('productQty').value = item.qty;
+      document.getElementById('productPrice').value = item.price;
+
+      // Remove item from list temporarily
+      items = items.filter(item => item.id !== id);
+      updateItemList();
+      
+      // Scroll to form
+      document.getElementById('productName').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('productName').focus();
+      
+      showStatus('กรุณาแก้ไขข้อมูลสินค้าและกดเพิ่มสินค้าอีกครั้ง', 'info');
     }
 
     function updateItemList() {
@@ -1548,9 +1609,14 @@
                 </div>
                 ${item.size ? `<div class="text-xs text-gray-600 font-medium truncate">${item.size}</div>` : ''}
               </div>
-              <button onclick="removeItem(${item.id})" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 premium-shadow flex-shrink-0">
-                <span class="text-sm icon-wiggle">🗑️</span>
-              </button>
+              <div class="flex gap-2 flex-shrink-0">
+                <button onclick="editItem(${item.id})" class="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white px-2 py-2 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 premium-shadow">
+                  <span class="text-sm">✏️</span>
+                </button>
+                <button onclick="confirmRemoveItem(${item.id})" class="bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-2 py-2 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 premium-shadow">
+                  <span class="text-sm">🗑️</span>
+                </button>
+              </div>
             </div>
             
             <div class="bg-gradient-to-r from-gray-50 to-white p-3 rounded-xl border-2 border-gray-100">
@@ -1605,9 +1671,14 @@
                 <div class="text-xs font-bold">ยอดรวม</div>
                 <div class="text-lg font-black">${item.total.toFixed(2)} บาท</div>
               </div>
-              <button onclick="removeItem(${item.id})" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all duration-500 transform hover:scale-110 premium-shadow hover:neon-glow">
-                <span class="text-base mr-1 icon-wiggle">🗑️</span> ลบ
-              </button>
+              <div class="flex gap-2">
+                <button onclick="editItem(${item.id})" class="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white px-3 py-2 rounded-xl text-sm font-bold transition-all duration-500 transform hover:scale-110 premium-shadow hover:neon-glow">
+                  <span class="text-base mr-1">✏️</span> แก้ไข
+                </button>
+                <button onclick="confirmRemoveItem(${item.id})" class="bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-3 py-2 rounded-xl text-sm font-bold transition-all duration-500 transform hover:scale-110 premium-shadow hover:neon-glow">
+                  <span class="text-base mr-1">🗑️</span> ลบ
+                </button>
+              </div>
             </div>
           </div>
         </li>
@@ -1628,18 +1699,48 @@
       document.getElementById('productPrice').value = '';
     }
 
-    function generateReceipt() {
+    function confirmGenerateReceipt() {
+      console.log('confirmGenerateReceipt called');
+      
       const customerName = document.getElementById('customerName').value.trim();
       const customerPhone = document.getElementById('customerPhone').value.trim();
       const customerAddress = document.getElementById('customerAddress').value.trim();
 
-      if (!customerName || !customerPhone || items.length === 0) {
-        showStatus('กรุณากรอกข้อมูลลูกค้าและเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
+      console.log('Form data:', { customerName, customerPhone, customerAddress, itemsCount: items.length });
+
+      if (!customerName || !customerPhone || !customerAddress) {
+        showStatus('กรุณากรอกข้อมูลลูกค้าให้ครบถ้วน (ชื่อ, เบอร์โทร, ที่อยู่)', 'error');
         return;
       }
 
+      if (items.length === 0) {
+        showStatus('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
+        return;
+      }
+
+      const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+      const confirmMessage = `คุณต้องการสร้างใบเสร็จสำหรับ:\n\nลูกค้า: ${customerName}\nเบอร์โทร: ${customerPhone}\nจำนวนสินค้า: ${items.length} รายการ\nยอดรวม: ${totalAmount.toFixed(2)} บาท\n\nระบบจะบันทึกออร์เดอร์และสร้างใบเสร็จให้อัตโนมัติ`;
+      
+      console.log('Showing confirmation dialog');
+      if (confirm(confirmMessage)) {
+        console.log('User confirmed, calling generateReceiptWithSave');
+        generateReceiptWithSave();
+      } else {
+        console.log('User cancelled');
+      }
+    }
+
+    async function generateReceiptWithSave() {
+      console.log('generateReceiptWithSave called');
+      
+      const customerName = document.getElementById('customerName').value.trim();
+      const customerPhone = document.getElementById('customerPhone').value.trim();
+      const customerAddress = document.getElementById('customerAddress').value.trim();
+
+      console.log('Customer data:', { customerName, customerPhone, customerAddress });
+      console.log('Items:', items);
+
       const order = {
-        id: `ORD${Date.now()}`,
         customer: {
           name: customerName,
           phone: customerPhone,
@@ -1651,19 +1752,80 @@
         status: 'รอดำเนินการ'
       };
 
-      showReceiptView(order);
-      showStatus('สร้างใบเสร็จเรียบร้อยแล้ว', 'success');
+      console.log('Order object:', order);
+      showStatus('กำลังบันทึกออร์เดอร์และสร้างใบเสร็จ...', 'info');
+
+      try {
+        console.log('Calling saveOrderToFirebase...');
+        const success = await window.saveOrderToFirebase(order);
+        console.log('Save result:', success);
+        
+        if (success) {
+          console.log('Save successful, showing receipt...');
+          showReceiptView({
+            id: `ORD${Date.now()}`,
+            ...order
+          });
+          
+          // Clear form after successful save
+          items = [];
+          document.getElementById('customerName').value = '';
+          document.getElementById('customerPhone').value = '';
+          document.getElementById('customerAddress').value = '';
+          clearProductForm();
+          updateItemList();
+          
+          showStatus('บันทึกออร์เดอร์และสร้างใบเสร็จเรียบร้อยแล้ว', 'success');
+        } else {
+          console.log('Save failed');
+          showStatus('เกิดข้อผิดพลาดในการบันทึกออร์เดอร์', 'error');
+        }
+      } catch (error) {
+        console.error('Error in generateReceiptWithSave:', error);
+        showStatus('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: ' + error.message, 'error');
+      }
+    }
+
+    function confirmSaveOrder() {
+      console.log('confirmSaveOrder called');
+      
+      const customerName = document.getElementById('customerName').value.trim();
+      const customerPhone = document.getElementById('customerPhone').value.trim();
+      const customerAddress = document.getElementById('customerAddress').value.trim();
+
+      console.log('Form data:', { customerName, customerPhone, customerAddress, itemsCount: items.length });
+
+      if (!customerName || !customerPhone || !customerAddress) {
+        showStatus('กรุณากรอกข้อมูลลูกค้าให้ครบถ้วน (ชื่อ, เบอร์โทร, ที่อยู่)', 'error');
+        return;
+      }
+
+      if (items.length === 0) {
+        showStatus('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
+        return;
+      }
+
+      const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+      const confirmMessage = `คุณต้องการบันทึกออร์เดอร์สำหรับ:\n\nลูกค้า: ${customerName}\nเบอร์โทร: ${customerPhone}\nจำนวนสินค้า: ${items.length} รายการ\nยอดรวม: ${totalAmount.toFixed(2)} บาท`;
+      
+      console.log('Showing confirmation dialog');
+      if (confirm(confirmMessage)) {
+        console.log('User confirmed, calling saveOrder');
+        saveOrder();
+      } else {
+        console.log('User cancelled');
+      }
     }
 
     async function saveOrder() {
+      console.log('saveOrder called');
+      
       const customerName = document.getElementById('customerName').value.trim();
       const customerPhone = document.getElementById('customerPhone').value.trim();
       const customerAddress = document.getElementById('customerAddress').value.trim();
 
-      if (!customerName || !customerPhone || items.length === 0) {
-        showStatus('กรุณากรอกข้อมูลลูกค้าและเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
-        return;
-      }
+      console.log('Customer data:', { customerName, customerPhone, customerAddress });
+      console.log('Items:', items);
 
       const order = {
         customer: {
@@ -1677,11 +1839,16 @@
         status: 'รอดำเนินการ'
       };
 
+      console.log('Order object:', order);
       showStatus('กำลังบันทึกออร์เดอร์...', 'info');
 
       try {
+        console.log('Calling saveOrderToFirebase...');
         const success = await window.saveOrderToFirebase(order);
+        console.log('Save result:', success);
+        
         if (success) {
+          console.log('Save successful');
           orderCounter++;
           showStatus('บันทึกออร์เดอร์เรียบร้อยแล้ว', 'success');
           
@@ -1693,10 +1860,12 @@
           clearProductForm();
           updateItemList();
         } else {
+          console.log('Save failed');
           showStatus('เกิดข้อผิดพลาดในการบันทึกออร์เดอร์', 'error');
         }
       } catch (error) {
-        showStatus('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล', 'error');
+        console.error('Error in saveOrder:', error);
+        showStatus('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: ' + error.message, 'error');
       }
     }
 
@@ -1821,5 +1990,5 @@
     updateItemList();
   </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96599a8df58a271d',t:'MTc1MzU5Mjc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966134b4c11cee52',t:'MTc1MzY3MjQ2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
