@@ -76,77 +76,70 @@
     }
   </script>
 
-  <!-- Firebase SDKs -->
-    </script>
+  <!-- Firebase SDKs แบบ non-module -->
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
+    authDomain: "orders-3d979.firebaseapp.com",
+    databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "orders-3d979",
+    storageBucket: "orders-3d979.appspot.com",
+    messagingSenderId: "123456789", // <== ใส่เลขจริงจาก Firebase Console
+    appId: "1:123456789:web:4f1b772b853b602cc93e94",
+    measurementId: "G-P5JPR90CX8"
+  };
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getDatabase, ref, push, set, get, child } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
-      authDomain: "orders-3d979.firebaseapp.com",
-      databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "orders-3d979",
-      storageBucket: "orders-3d979.appspot.com",
-      messagingSenderId: ". ",
-      appId: "1:. :web:4f1b772b853b602cc93e94",
-      measurementId: "G-P5JPR90CX8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    window.saveOrderToFirebase = async function(order) {
-      try {
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        await set(newOrderRef, order);
-        return true;
-      } catch (error) {
-        console.error("Error saving order:", error);
-        return false;
-      }
+  window.saveOrderToFirebase = async function(order) {
+    try {
+      const orderId = 'ORD' + Date.now();
+      await database.ref('orders/' + orderId).set(order);
+      console.log("✅ Order saved:", orderId);
+      return true;
+    } catch (error) {
+      console.error("❌ Save error:", error);
+      return false;
     }
+  };
 
-    window.getOrdersFromFirebase = async function() {
-      try {
-        const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, 'orders'));
-        if (snapshot.exists()) {
-          return snapshot.val();
-        } else {
-          return {};
-        }
-      } catch (error) {
-        console.error("Error getting orders:", error);
+  window.getOrdersFromFirebase = async function() {
+    try {
+      const snapshot = await database.ref('orders').get();
+      if (snapshot.exists()) {
+        return snapshot.val();
+      } else {
         return {};
       }
+    } catch (error) {
+      console.error("❌ Get error:", error);
+      return {};
     }
+  };
 
-    window.updateOrderInFirebase = async function(orderId, updatedOrder) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, updatedOrder);
-        return true;
-      } catch (error) {
-        console.error("Error updating order:", error);
-        return false;
-      }
+  window.updateOrderInFirebase = async function(orderId, updatedOrder) {
+    try {
+      await database.ref('orders/' + orderId).set(updatedOrder);
+      return true;
+    } catch (error) {
+      console.error("❌ Update error:", error);
+      return false;
     }
+  };
 
-    window.deleteOrderFromFirebase = async function(orderId) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, null);
-        return true;
-      } catch (error) {
-        console.error("Error deleting order:", error);
-        return false;
-      }
+  window.deleteOrderFromFirebase = async function(orderId) {
+    try {
+      await database.ref('orders/' + orderId).remove();
+      return true;
+    } catch (error) {
+      console.error("❌ Delete error:", error);
+      return false;
     }
-  </script>
+  };
+</script>
 
   <style>
     * {
@@ -1092,6 +1085,7 @@
     let allOrders = {};
     let filteredOrders = {};
     let currentReceiptOrder = null;
+    let isOrderSaved = false; // ติดตามสถานะการบันทึก
 
     // Login functions
     function showLoginModal() {
@@ -1514,6 +1508,10 @@
       items.push(item);
       updateItemList();
       clearProductForm();
+      
+      // Reset order saved status when items are modified
+      isOrderSaved = false;
+      
       showStatus('เพิ่มสินค้าเรียบร้อยแล้ว', 'success');
     }
 
@@ -1526,6 +1524,10 @@
     function removeItem(id) {
       items = items.filter(item => item.id !== id);
       updateItemList();
+      
+      // Reset order saved status when items are modified
+      isOrderSaved = false;
+      
       showStatus('ลบสินค้าเรียบร้อยแล้ว', 'success');
     }
 
@@ -1542,6 +1544,9 @@
       // Remove item from list temporarily
       items = items.filter(item => item.id !== id);
       updateItemList();
+      
+      // Reset order saved status when items are modified
+      isOrderSaved = false;
       
       // Scroll to form
       document.getElementById('productName').scrollIntoView({ behavior: 'smooth' });
@@ -1668,48 +1673,21 @@
       document.getElementById('productPrice').value = '';
     }
 
-    function confirmGenerateReceipt() {
-      console.log('confirmGenerateReceipt called');
-      
+    function generateOrderObject() {
       const customerName = document.getElementById('customerName').value.trim();
       const customerPhone = document.getElementById('customerPhone').value.trim();
       const customerAddress = document.getElementById('customerAddress').value.trim();
-
-      console.log('Form data:', { customerName, customerPhone, customerAddress, itemsCount: items.length });
 
       if (!customerName || !customerPhone || !customerAddress) {
         showStatus('กรุณากรอกข้อมูลลูกค้าให้ครบถ้วน (ชื่อ, เบอร์โทร, ที่อยู่)', 'error');
-        return;
+        return null;
       }
 
       if (items.length === 0) {
-        showStatus('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
-        return;
+        return null;
       }
 
-      const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
-      const confirmMessage = `คุณต้องการสร้างใบเสร็จสำหรับ:\n\nลูกค้า: ${customerName}\nเบอร์โทร: ${customerPhone}\nจำนวนสินค้า: ${items.length} รายการ\nยอดรวม: ${totalAmount.toFixed(2)} บาท\n\nระบบจะบันทึกออร์เดอร์และสร้างใบเสร็จให้อัตโนมัติ`;
-      
-      console.log('Showing confirmation dialog');
-      if (confirm(confirmMessage)) {
-        console.log('User confirmed, calling generateReceiptWithSave');
-        generateReceiptWithSave();
-      } else {
-        console.log('User cancelled');
-      }
-    }
-
-    async function generateReceiptWithSave() {
-      console.log('generateReceiptWithSave called');
-      
-      const customerName = document.getElementById('customerName').value.trim();
-      const customerPhone = document.getElementById('customerPhone').value.trim();
-      const customerAddress = document.getElementById('customerAddress').value.trim();
-
-      console.log('Customer data:', { customerName, customerPhone, customerAddress });
-      console.log('Items:', items);
-
-      const order = {
+      return {
         customer: {
           name: customerName,
           phone: customerPhone,
@@ -1720,123 +1698,68 @@
         orderDate: new Date().toISOString(),
         status: 'รอดำเนินการ'
       };
-
-      console.log('Order object:', order);
-      showStatus('กำลังบันทึกออร์เดอร์และสร้างใบเสร็จ...', 'info');
-
-      try {
-        console.log('Calling saveOrderToFirebase...');
-        const success = await window.saveOrderToFirebase(order);
-        console.log('Save result:', success);
-        
-        if (success) {
-          console.log('Save successful, showing receipt...');
-          showReceiptView({
-            id: `ORD${Date.now()}`,
-            ...order
-          });
-          
-          // Clear form after successful save
-          items = [];
-          document.getElementById('customerName').value = '';
-          document.getElementById('customerPhone').value = '';
-          document.getElementById('customerAddress').value = '';
-          clearProductForm();
-          updateItemList();
-          
-          showStatus('บันทึกออร์เดอร์และสร้างใบเสร็จเรียบร้อยแล้ว', 'success');
-        } else {
-          console.log('Save failed');
-          showStatus('เกิดข้อผิดพลาดในการบันทึกออร์เดอร์', 'error');
-        }
-      } catch (error) {
-        console.error('Error in generateReceiptWithSave:', error);
-        showStatus('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: ' + error.message, 'error');
-      }
     }
+
+    function confirmGenerateReceipt() {
+      if (!isOrderSaved) {
+        alert("กรุณาบันทึกออร์เดอร์ก่อนสร้างใบเสร็จ");
+        return;
+      }
+
+      generateReceipt();
+    }
+
+    function generateReceipt() {
+      const order = generateOrderObject();
+      if (!order) return;
+
+      showReceiptView({
+        id: `ORD${Date.now()}`,
+        ...order
+      });
+      
+      // Clear form after successful receipt generation
+      items = [];
+      document.getElementById('customerName').value = '';
+      document.getElementById('customerPhone').value = '';
+      document.getElementById('customerAddress').value = '';
+      clearProductForm();
+      updateItemList();
+      
+      // Reset order saved status
+      isOrderSaved = false;
+      
+      showStatus('สร้างใบเสร็จเรียบร้อยแล้ว', 'success');
+    }
+
+
 
     function confirmSaveOrder() {
-      console.log('confirmSaveOrder called');
-      
-      const customerName = document.getElementById('customerName').value.trim();
-      const customerPhone = document.getElementById('customerPhone').value.trim();
-      const customerAddress = document.getElementById('customerAddress').value.trim();
+      if (!confirm("คุณต้องการบันทึกออร์เดอร์นี้ใช่หรือไม่?")) return;
 
-      console.log('Form data:', { customerName, customerPhone, customerAddress, itemsCount: items.length });
-
-      if (!customerName || !customerPhone || !customerAddress) {
-        showStatus('กรุณากรอกข้อมูลลูกค้าให้ครบถ้วน (ชื่อ, เบอร์โทร, ที่อยู่)', 'error');
+      const order = generateOrderObject();
+      if (!order || order.items.length === 0) {
+        alert("กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการก่อนบันทึก");
         return;
       }
 
-      if (items.length === 0) {
-        showStatus('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error');
-        return;
-      }
-
-      const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
-      const confirmMessage = `คุณต้องการบันทึกออร์เดอร์สำหรับ:\n\nลูกค้า: ${customerName}\nเบอร์โทร: ${customerPhone}\nจำนวนสินค้า: ${items.length} รายการ\nยอดรวม: ${totalAmount.toFixed(2)} บาท`;
-      
-      console.log('Showing confirmation dialog');
-      if (confirm(confirmMessage)) {
-        console.log('User confirmed, calling saveOrder');
-        saveOrder();
-      } else {
-        console.log('User cancelled');
-      }
-    }
-
-    async function saveOrder() {
-      console.log('saveOrder called');
-      
-      const customerName = document.getElementById('customerName').value.trim();
-      const customerPhone = document.getElementById('customerPhone').value.trim();
-      const customerAddress = document.getElementById('customerAddress').value.trim();
-
-      console.log('Customer data:', { customerName, customerPhone, customerAddress });
-      console.log('Items:', items);
-
-      const order = {
-        customer: {
-          name: customerName,
-          phone: customerPhone,
-          address: customerAddress
-        },
-        items: items,
-        totalAmount: items.reduce((sum, item) => sum + item.total, 0),
-        orderDate: new Date().toISOString(),
-        status: 'รอดำเนินการ'
-      };
-
-      console.log('Order object:', order);
       showStatus('กำลังบันทึกออร์เดอร์...', 'info');
 
-      try {
-        console.log('Calling saveOrderToFirebase...');
-        const success = await window.saveOrderToFirebase(order);
-        console.log('Save result:', success);
-        
+      window.saveOrderToFirebase(order).then(success => {
         if (success) {
-          console.log('Save successful');
-          orderCounter++;
-          showStatus('บันทึกออร์เดอร์เรียบร้อยแล้ว', 'success');
-          
-          // Clear form after successful save
-          items = [];
-          document.getElementById('customerName').value = '';
-          document.getElementById('customerPhone').value = '';
-          document.getElementById('customerAddress').value = '';
-          clearProductForm();
-          updateItemList();
+          isOrderSaved = true;
+          showStatus("บันทึกออร์เดอร์สำเร็จ", "success");
+          setTimeout(() => confirmGenerateReceipt(), 500); // สร้างใบเสร็จอัตโนมัติ
         } else {
-          console.log('Save failed');
-          showStatus('เกิดข้อผิดพลาดในการบันทึกออร์เดอร์', 'error');
+          showStatus("เกิดข้อผิดพลาดในการบันทึกออร์เดอร์", "error");
         }
-      } catch (error) {
-        console.error('Error in saveOrder:', error);
-        showStatus('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: ' + error.message, 'error');
-      }
+      }).catch(error => {
+        console.error('Error saving order:', error);
+        showStatus("เกิดข้อผิดพลาดในการบันทึกออร์เดอร์", "error");
+      });
     }
+
+
 
     // Customer order search functionality
     async function searchOrders() {
@@ -1959,5 +1882,5 @@
     updateItemList();
   </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966134b4c11cee52',t:'MTc1MzY3MjQ2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96624aecb18cd034',t:'MTc1MzY4Mzg1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
