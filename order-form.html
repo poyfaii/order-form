@@ -310,23 +310,21 @@
     }
     
     .receipt-watermark {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      color: rgba(0, 0, 0, 0.03);
-      font-weight: bold;
-      pointer-events: none;
-      user-select: none;
-      z-index: 0;
-      transform: rotate(-45deg);
-      white-space: nowrap;
-    }
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 5rem;
+  color: rgba(0, 0, 0, 0.03);
+  font-weight: 900;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: 'Kanit', sans-serif;
+}
     
     @media (min-width: 768px) {
       .receipt-watermark {
@@ -339,20 +337,44 @@
       z-index: 1;
     }
     
-    @media print {
-      body {
-        background: white !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-      .print-only {
-        display: block !important;
-      }
-      #loginBtn, #logoutBtn {
-        display: none !important;
-      }
-    }
+   @media print {
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
+  }
+
+  .no-print, #loginBtn, #logoutBtn, #loginButtonContainer {
+    display: none !important;
+  }
+
+  #receiptView {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #receiptContent {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  .receipt-watermark {
+    opacity: 0.04 !important;
+  }
+
+  .status-badge {
+    border-width: 1px !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+}
+
     
     .animate-fade-in {
       animation: fadeIn 0.8s ease-in-out;
