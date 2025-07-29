@@ -80,7 +80,12 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getDatabase, ref, push, set, get, child } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-
+    import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
       authDomain: "orders-3d979.firebaseapp.com",
@@ -94,55 +99,62 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    const auth = getAuth(app);
 
-    window.saveOrderToFirebase = async function(order) {
-      try {
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        await set(newOrderRef, order);
-        return true;
-      } catch (error) {
-        console.error("Error saving order:", error);
-        return false;
-      }
-    }
+ window.saveOrderToFirebase = async function(order) {
+  try {
+    const ordersRef = ref(database, 'orders_public');
+    const newOrderRef = push(ordersRef);
+    await set(newOrderRef, order);
+    return true;
+  } catch (error) {
+    console.error("Error saving order:", error);
+    return false;
+  }
+}
 
     window.getOrdersFromFirebase = async function() {
-      try {
-        const dbRef = ref(database);
-        const snapshot = await get(child(dbRef, 'orders'));
-        if (snapshot.exists()) {
-          return snapshot.val();
-        } else {
-          return {};
-        }
-      } catch (error) {
-        console.error("Error getting orders:", error);
-        return {};
-      }
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("ยังไม่ได้ล็อกอินร้านค้า");
+    const ordersRef = ref(database, 'orders/' + user.uid);
+    const snapshot = await get(ordersRef);
+    if (snapshot.exists()) {
+      return snapshot.val();
+    } else {
+      return {};
     }
+  } catch (error) {
+    console.error("Error getting orders:", error);
+    return {};
+  }
+}
 
     window.updateOrderInFirebase = async function(orderId, updatedOrder) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, updatedOrder);
-        return true;
-      } catch (error) {
-        console.error("Error updating order:", error);
-        return false;
-      }
-    }
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("ยังไม่ได้ล็อกอินร้านค้า");
+    const orderRef = ref(database, `orders/${user.uid}/${orderId}`);
+    await set(orderRef, updatedOrder);
+    return true;
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return false;
+  }
+}
 
     window.deleteOrderFromFirebase = async function(orderId) {
-      try {
-        const orderRef = ref(database, `orders/${orderId}`);
-        await set(orderRef, null);
-        return true;
-      } catch (error) {
-        console.error("Error deleting order:", error);
-        return false;
-      }
-    }
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("ยังไม่ได้ล็อกอินร้านค้า");
+    const orderRef = ref(database, `orders/${user.uid}/${orderId}`);
+    await set(orderRef, null);
+    return true;
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    return false;
+  }
+}
   </script>
 
   <style>
