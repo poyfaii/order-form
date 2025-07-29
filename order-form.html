@@ -1025,23 +1025,23 @@
         <div class="receipt-watermark">ร้าน แม่ดอนโอทอป</div>
         
         <div class="receipt-content">
-          <!-- Receipt Header -->
-<div class="bg-gradient-to-r from-yellow-200 via-yellow-300 to-yellow-400 p-4 text-center text-white relative rounded-t-2xl shadow-md">
-  <div class="absolute top-2 right-3 text-xs text-yellow-100 opacity-60 font-semibold select-none">
-    ใบเสร็จ
-  </div>
+       <!-- Receipt Header -->
+<div class="relative text-center py-6 px-4 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 text-white rounded-t-2xl shadow-md">
+  <!-- ลายน้ำ -->
+  <div class="receipt-watermark">ร้านแม่ดอนโอทอป</div>
 
-  <div class="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce shadow-lg">
+  <!-- โลโก้หรือไอคอนกลาง -->
+  <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3 animate-bounce shadow-inner">
     <span class="text-3xl">🍌</span>
   </div>
 
+  <!-- ชื่อร้าน -->
   <h1 class="text-3xl md:text-4xl font-black tracking-wide text-white drop-shadow-lg leading-tight">
     ร้านแม่ดอนโอทอป
   </h1>
 
-  <p class="text-sm text-yellow-100 mt-1 font-semibold" id="receiptDate">
-    <!-- วันที่จะเติมโดย JS -->
-  </p>
+  <!-- วันที่ -->
+  <p class="text-sm md:text-base font-semibold text-yellow-100 mt-2" id="receiptDate"></p>
 </div>
           
           <!-- Customer Info -->
@@ -1106,9 +1106,10 @@
           </div>
           
           <!-- Footer -->
-          <div class="honey-gradient p-2 text-center text-white">
-            <p class="text-honey-200 text-xs">ขอบคุณที่ใช้บริการ 🙏</p>
-          </div>
+          <!-- Thank You Note -->
+<div class="text-center mt-6 text-brown-700 text-lg font-semibold italic drop-shadow-sm tracking-wide">
+  ✨ ขอขอบคุณที่อุดหนุนสินค้าของเรา ✨
+</div>
         </div>
       </div>
     </div>
@@ -1242,7 +1243,6 @@
           margin: auto;
           padding: 20px;
           background: white;
-          box-shadow: none;
         }
 
         .receipt-watermark {
@@ -1282,6 +1282,7 @@
     </body>
     </html>
   `);
+
   win.document.close();
 }
 
@@ -1300,7 +1301,7 @@
 });
 
         const link = document.createElement('a');
-        link.download = `receipt-${currentReceiptOrder.customer?.name || 'customer'}-${new Date().toISOString().split('T')[0]}.png`;
+        link.download = `madon-${new Date().toISOString().split('T')[0]}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
 
