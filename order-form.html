@@ -1304,12 +1304,16 @@
       useCORS: true
     });
 
+    const customerName = currentReceiptOrder.customer?.name?.trim() || 'ลูกค้า';
+    const sanitizedName = customerName.replace(/[\\/:*?"<>|]/g, '');
+    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
-    link.download = `madon-${new Date().toISOString().split('T')[0]}.png`;
+    link.download = `ใบเสร็จ-${sanitizedName}-${dateStr}.png`;
     link.click();
 
-    showStatus('ดาวน์โหลดรูปภาพเรียบร้อยแล้ว ✅', 'success');
+    showStatus(`ดาวน์โหลดใบเสร็จของ ${sanitizedName} เรียบร้อยแล้ว ✅`, 'success');
   } catch (error) {
     console.error('เกิดข้อผิดพลาดในการสร้างรูปภาพใบเสร็จ:', error);
     showStatus('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ', 'error');
