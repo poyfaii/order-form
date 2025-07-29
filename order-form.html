@@ -1005,7 +1005,7 @@
           </button>
           
           <div class="flex items-center gap-3">
-            <button onclick="printReceipt()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-medium text-sm">
+            <button onclick="openPrintableReceipt()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-medium text-sm">
               <span class="text-base mr-1">🖨️</span>
               พิมพ์
             </button>
@@ -1218,20 +1218,62 @@
       }
     }
 
-   function printReceipt() {
+   function openPrintableReceipt() {
   const receiptHTML = document.getElementById("receiptContent").outerHTML;
-  const newWindow = window.open('', '_blank');
-  newWindow.document.write(`
+
+  const win = window.open('', '_blank');
+  win.document.write(`
     <html>
     <head>
       <title>ใบเสร็จร้านแม่ดอนโอทอป</title>
+      <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
       <style>
-        @media print {
-          @page { margin: 0; }
-          body { margin: 0; }
-        }
         body {
           font-family: 'Kanit', sans-serif;
+          margin: 0;
+          padding: 0;
+          background: white;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        #receiptContent {
+          max-width: 700px;
+          margin: auto;
+          padding: 20px;
+          background: white;
+          box-shadow: none;
+        }
+
+        .receipt-watermark {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-30deg);
+          font-size: 5rem;
+          color: rgba(0, 0, 0, 0.03);
+          font-weight: 900;
+          white-space: nowrap;
+          pointer-events: none;
+          user-select: none;
+          z-index: 0;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        @page {
+          size: A4;
+          margin: 20mm;
+        }
+
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+
+          .receipt-watermark {
+            opacity: 0.04 !important;
+          }
         }
       </style>
     </head>
@@ -1240,7 +1282,7 @@
     </body>
     </html>
   `);
-  newWindow.document.close();
+  win.document.close();
 }
 
     async function downloadReceiptImage() {
