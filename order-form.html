@@ -1009,7 +1009,7 @@
               <span class="text-base mr-1">🖨️</span>
               พิมพ์
             </button>
-            <button onclick="downloadReceiptImage()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-medium text-sm">
+            <button onclick="downloadReceiptAsImage()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 font-medium text-sm">
               <span class="text-base mr-1">📸</span>
               ดาวน์โหลด
             </button>
@@ -1286,31 +1286,35 @@
   win.document.close();
 }
 
-    async function downloadReceiptImage() {
-      if (!currentReceiptOrder) return;
-      
-      showStatus('กำลังสร้างรูปภาพ...', 'info');
+  async function downloadReceiptAsImage() {
+  if (!currentReceiptOrder) return;
 
-      try {
-        const receiptContent = document.getElementById('receiptContent');
-        const canvas = await html2canvas(receiptContent, {
-  backgroundColor: '#ffffff',
-  scale: window.devicePixelRatio || 3,
-  useCORS: true,
-  allowTaint: true
-});
+  const receiptContent = document.getElementById('receiptContent');
+  if (!receiptContent) {
+    showStatus('ไม่พบเนื้อหาใบเสร็จ', 'error');
+    return;
+  }
 
-        const link = document.createElement('a');
-        link.download = `madon-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+  showStatus('กำลังสร้างรูปภาพ...', 'info');
 
-        showStatus('ดาวน์โหลดรูปภาพเรียบร้อยแล้ว', 'success');
-      } catch (error) {
-        console.error('Error downloading image:', error);
-        showStatus('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ', 'error');
-      }
-    }
+  try {
+    const canvas = await html2canvas(receiptContent, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true
+    });
+
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `madon-${new Date().toISOString().split('T')[0]}.png`;
+    link.click();
+
+    showStatus('ดาวน์โหลดรูปภาพเรียบร้อยแล้ว ✅', 'success');
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการสร้างรูปภาพใบเสร็จ:', error);
+    showStatus('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ', 'error');
+  }
+}
 
     // Order management functions
     async function loadOrders() {
