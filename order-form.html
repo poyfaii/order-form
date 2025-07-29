@@ -607,7 +607,33 @@
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">🍌</span> ชื่อสินค้า
           </label>
-          <input id="productName" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="กรอกชื่อสินค้า เช่น กล้วยหอมออร์แกนิค" />
+         <input list="productList" id="productName"
+       class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium"
+       placeholder="กรอกชื่อสินค้า เช่น กล้วยหอมออร์แกนิค">
+
+<datalist id="productList">
+  <option value="กล้วยเบรคแตก">
+  <option value="กล้วยปาปิก้า">
+  <option value="กล้วยหักมุกคาราเมล">
+  <option value="กล้วยฉาบเค็ม">
+  <option value="กล้วยอบเนย">
+  <option value="กล้วยสอดใส้มะขาม">
+  <option value="กล้วยหักมุกแว่นเค็ม ไม่ใส่ใส้มะขาม">
+  <option value="ฟักทอง">
+  <option value="มันไข่อบเนย">
+  <option value="มันไข่เส้นเค็ม">
+  <option value="มันต่ออบเนย">
+  <option value="มันต่อเส้น">
+  <option value="กล้วยเส้นสมุนไพร">
+  <option value="กล้วยเส้นปาปิก้า">
+  <option value="เผือกแผ่นอบเนย">
+  <option value="เผือกเส้นเค็ม">
+  <option value="คุ๊กกี้">
+  <option value="ทองม้วนกะทิ">
+  <option value="ทองม้วนแฟนซี">
+  <option value="ขนมผิงกะทิ">
+  <option value="ขนมผิงแฟนซี">
+</datalist>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="space-y-3">
