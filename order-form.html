@@ -1636,36 +1636,31 @@
       searchAdminOrders();
     }
 
-    // Original ordering system functions
     function addItem() {
-      const name = document.getElementById('productName').value.trim();
-      const size = document.getElementById('productSize').value.trim();
-      const qty = parseInt(document.getElementById('productQty').value);
-      const price = parseFloat(document.getElementById('productPrice').value);
+  const name = document.getElementById('productName')?.value.trim() || '';
+  const size = document.getElementById('productWeight')?.value.trim() || ''; // ✅ แก้ id จาก productSize → productWeight
+  const qtyRaw = document.getElementById('productQty')?.value;
+  const priceRaw = document.getElementById('productPrice')?.value;
 
-      if (!name || !qty || !price || qty <= 0 || price < 0) {
-        showStatus('กรุณากรอกข้อมูลสินค้าให้ครบถ้วน', 'error');
-        return;
-      }
+  const qty = qtyRaw ? parseInt(qtyRaw) : 0;
+  const price = priceRaw ? parseFloat(priceRaw) : 0;
 
-      const item = {
-        id: Date.now(),
-        name: name,
-        size: size || '',
-        qty: qty,
-        price: price,
-        total: qty * price
-      };
+  const item = {
+    id: Date.now(),
+    name: name,
+    size: size,
+    qty: qty,
+    price: price,
+    total: qty * price
+  };
 
-      items.push(item);
-      updateItemList();
-      clearProductForm();
-      
-      // Reset order saved status when items are modified
-      isOrderSaved = false;
-      
-      showStatus('เพิ่มสินค้าเรียบร้อยแล้ว', 'success');
-    }
+  items.push(item);
+  updateItemList();
+  clearProductForm();
+  
+  isOrderSaved = false;
+  showStatus('เพิ่มสินค้าเรียบร้อยแล้ว', 'success');
+}
 
     function confirmRemoveItem(id) {
       if (confirm('คุณต้องการลบสินค้านี้หรือไม่?')) {
