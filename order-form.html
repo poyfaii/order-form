@@ -640,7 +640,25 @@
             <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
               <span class="text-xl icon-wiggle">📏</span> ขนาด
             </label>
-            <input id="productSize" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="เช่น 500g, 1kg" />
+            <div class="mb-4">
+  <label for="productWeight" class="block mb-1 font-semibold text-gray-700">ขนาด / ปริมาณสินค้า</label>
+  <input list="weightList" id="productWeight" name="productWeight"
+         class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium"
+         placeholder="เลือกขนาด เช่น 100กรัม">
+
+  <datalist id="weightList">
+    <option value="100กรัม">
+    <option value="150กรัม">
+    <option value="500กรัม">
+    <option value="1กิโลกรัม">
+    <option value="3กิโลกรัม">
+    <option value="4กิโลกรัม">
+    <option value="5กิโลกรัม">
+    <option value="1ลัง">
+    <option value="3ลัง">
+    <option value="5ลัง">
+  </datalist>
+</div>
           </div>
           <div class="space-y-3">
             <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
