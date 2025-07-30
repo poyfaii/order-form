@@ -1638,7 +1638,7 @@
 
     function addItem() {
   const name = document.getElementById('productName')?.value.trim() || '';
-  const size = document.getElementById('productWeight')?.value.trim() || ''; // ✅ แก้ id จาก productSize → productWeight
+  const size = document.getElementById('productWeight')?.value.trim() || '';
   const qtyRaw = document.getElementById('productQty')?.value;
   const priceRaw = document.getElementById('productPrice')?.value;
 
@@ -1647,19 +1647,28 @@
 
   const item = {
     id: Date.now(),
-    name: name,
-    size: size,
-    qty: qty,
-    price: price,
-    total: qty * price
+    name,
+    size,
+    qty,
+    price,
+    total: qty * price,
   };
 
   items.push(item);
   updateItemList();
   clearProductForm();
-  
+
   isOrderSaved = false;
-  showStatus('เพิ่มสินค้าเรียบร้อยแล้ว', 'success');
+
+  // ✅ เพิ่มบันทึกไปยัง Firebase
+  const db = getDatabase();
+  const ordersRef = ref(db, 'orders'); // ✅ path นี้ปรับตามของคุณ
+  push(ordersRef, item)
+    .then(() => showStatus('บันทึกสินค้าไปยังฐานข้อมูลแล้ว', 'success'))
+    .catch((error) => {
+      console.error('Firebase error:', error);
+      showStatus('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+    });
 }
 
     function confirmRemoveItem(id) {
