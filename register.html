@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ลงทะเบียนลูกค้า</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
   <style>
     * {
       box-sizing: border-box;
@@ -59,63 +59,58 @@
 
   <h2>ลงทะเบียนลูกค้า</h2>
 
-  <!-- 🔹 [1] ฟอร์มลงทะเบียน -->
   <form id="registerForm">
-    <input type="text" id="firstName" placeholder="ชื่อ" required>
-    <input type="text" id="lastName" placeholder="นามสกุล" required>
-    <input type="tel" id="phone" placeholder="เบอร์โทร (10 หลัก)" required>
+    <input type="text" id="firstName" placeholder="ชื่อ" required />
+    <input type="text" id="lastName" placeholder="นามสกุล" required />
+    <input type="tel" id="phone" placeholder="เบอร์โทร (10 หลัก)" required />
     <button type="submit">ถัดไป</button>
   </form>
 
-  <!-- 🔹 [2] Firebase และ Script -->
- <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
-<script>
-  // กำหนด config Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
-    authDomain: "orders-3d979.firebaseapp.com",
-    databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "orders-3d979",
-    storageBucket: "orders-3d979.appspot.com",
-    messagingSenderId: "1048840913149",
-    appId: "1:1048840913149:web:4f1b772b853b602cc93e94",
-    measurementId: "G-P5JPR90CX8"
-  };
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
+      authDomain: "orders-3d979.firebaseapp.com",
+      databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "orders-3d979",
+      storageBucket: "orders-3d979.appspot.com",
+      messagingSenderId: "1048840913149",
+      appId: "1:1048840913149:web:4f1b772b853b602cc93e94",
+      measurementId: "G-P5JPR90CX8"
+    };
 
-  // เริ่มต้น Firebase
-  firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
 
-  const db = firebase.database();
+    const db = firebase.database();
 
-  // ดักจับฟอร์ม submit
-  const form = document.getElementById('registerForm');
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
+    const form = document.getElementById('registerForm');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
 
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const phone = document.getElementById('phone').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const phone = document.getElementById('phone').value.trim();
 
-    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
-      alert('กรุณากรอกเบอร์โทรให้ถูกต้อง (10 หลัก)');
-      return;
-    }
+      // ตรวจเบอร์โทรง่ายๆ
+      if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+        alert('กรุณากรอกเบอร์โทรให้ถูกต้อง (10 หลัก)');
+        return;
+      }
 
-    const customerData = { firstName, lastName, phone };
+      alert(`ตรวจสอบข้อมูล:\nชื่อ: ${firstName}\nนามสกุล: ${lastName}\nเบอร์โทร: ${phone}`);
 
-    // บันทึกข้อมูลลูกค้าไป Firebase Realtime Database
-    firebase.database().ref('customers/' + phone).set(customerData)
-      .then(() => {
-        // เก็บข้อมูลใน sessionStorage
-        sessionStorage.setItem('customer', JSON.stringify(customerData));
-        // เปลี่ยนหน้าไป order-form.html
-        window.location.href = 'order-form.html';
-      })
-      .catch((error) => {
-        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + error.message);
-      });
-  });
-</script>
+      const customerData = { firstName, lastName, phone };
+
+      firebase.database().ref('customers/' + phone).set(customerData)
+        .then(() => {
+          sessionStorage.setItem('customer', JSON.stringify(customerData));
+          window.location.href = 'order-form.html';
+        })
+        .catch((error) => {
+          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + error.message);
+        });
+    });
+  </script>
 </body>
 </html>
