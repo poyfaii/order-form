@@ -2,9 +2,61 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ลงทะเบียนลูกค้า</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Sarabun', sans-serif;
+    }
+    body {
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    form {
+      background-color: #fff;
+      padding: 25px 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    input[type="text"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
 </head>
 <body>
+
   <h2>ลงทะเบียนลูกค้า</h2>
 
   <!-- 🔹 [1] ฟอร์มลงทะเบียน -->
@@ -15,29 +67,25 @@
     <button type="submit">ถัดไป</button>
   </form>
 
-  <!-- 🔹 [2] Firebase และ Script ลงทะเบียน -->
+  <!-- 🔹 [2] Firebase และ Script -->
   <script type="module">
-    // ✅ [2.1] Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-    // ✅ [2.2] ตั้งค่า Firebase
-   const firebaseConfig = {
-  apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
-  authDomain: "orders-3d979.firebaseapp.com",
-  databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "orders-3d979",
-  storageBucket: "orders-3d979.firebasestorage.app",
-  messagingSenderId: "1048840913149",
-  appId: "1:1048840913149:web:4f1b772b853b602cc93e94",
-  measurementId: "G-P5JPR90CX8"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
+      authDomain: "orders-3d979.firebaseapp.com",
+      databaseURL: "https://orders-3d979-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "orders-3d979",
+      storageBucket: "orders-3d979.appspot.com",
+      messagingSenderId: "1048840913149",
+      appId: "1:1048840913149:web:4f1b772b853b602cc93e94",
+      measurementId: "G-P5JPR90CX8"
+    };
 
-    // ✅ [2.3] เริ่มใช้งาน Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // ✅ [2.4] จัดการฟอร์ม
     const form = document.getElementById('registerForm');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -46,17 +94,15 @@
       const lastName = document.getElementById('lastName').value.trim();
       const phone = document.getElementById('phone').value.trim();
 
-      if (phone.length !== 10) {
-        alert('กรุณากรอกเบอร์โทร 10 หลัก');
+      if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+        alert('กรุณากรอกเบอร์โทรให้ถูกต้อง (10 หลัก)');
         return;
       }
 
       const customerData = { firstName, lastName, phone };
 
-      // ✅ [2.5] บันทึกข้อมูลลูกค้าไป Firebase
       await set(ref(db, 'customers/' + phone), customerData);
 
-      // ✅ [2.6] เก็บไว้ใน sessionStorage แล้วไป order-form
       sessionStorage.setItem('customer', JSON.stringify(customerData));
       window.location.href = 'order-form.html';
     });
