@@ -80,6 +80,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getDatabase, ref, push, set, get, child } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDAaW-OyL_13qkF7sCxXkMhpJyrOtntjg",
@@ -94,6 +96,8 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    
+    
 
     window.saveOrderToFirebase = async function(order) {
       try {
@@ -133,7 +137,7 @@
       }
     }
 
-    window.deleteOrderFromFirebase = async function(orderId) {
+       window.deleteOrderFromFirebase = async function(orderId) {
       try {
         const orderRef = ref(database, `orders/${orderId}`);
         await set(orderRef, null);
@@ -143,7 +147,16 @@
         return false;
       }
     }
-  </script>
+
+    // ✅ ดึงข้อมูลลูกค้าจาก sessionStorage แล้วใส่ใน input
+    const customer = JSON.parse(sessionStorage.getItem('customer'));
+    if (customer) {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('customerName').value = `${customer.firstName} ${customer.lastName}`;
+        document.getElementById('customerPhone').value = customer.phone;
+      });
+    }
+</script>
 
   <style>
     * {
@@ -571,13 +584,13 @@
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">👤</span> ชื่อ-นามสกุล
           </label>
-          <input id="customerName" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="กรอกชื่อ-นามสกุลของคุณ" />
+          <input type="text" id="customerName" placeholder="ชื่อลูกค้า" readonly />
         </div>
         <div class="space-y-3">
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">📱</span> เบอร์โทรศัพท์
           </label>
-          <input id="customerPhone" type="tel" pattern="[0-9]*" inputmode="numeric" class="input-modern w-full px-5 py-4 text-base rounded-2xl focus:outline-none font-medium" placeholder="กรอกเบอร์โทรศัพท์" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+          <input type="tel" id="customerPhone" placeholder="เบอร์โทร" readonly />
         </div>
         <div class="md:col-span-2 space-y-3">
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
