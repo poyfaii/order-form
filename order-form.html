@@ -584,13 +584,13 @@
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">👤</span> ชื่อ-นามสกุล
           </label>
-          <input type="text" id="customerName" placeholder="ชื่อลูกค้า" readonly />
+          <input type="text" id="customerName" placeholder="ชื่อลูกค้า" required>
         </div>
         <div class="space-y-3">
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
             <span class="text-xl icon-wiggle">📱</span> เบอร์โทรศัพท์
           </label>
-          <input type="tel" id="customerPhone" placeholder="เบอร์โทร" readonly />
+          <input type="tel" id="customerPhone" placeholder="เบอร์โทร (10 หลัก)" required pattern="\d{10}">
         </div>
         <div class="md:col-span-2 space-y-3">
           <label class="block text-base font-bold text-gray-800 flex items-center gap-2">
