@@ -151,9 +151,9 @@
     </div>
 
     <script>
-        // Google Apps Script URLs (replace with your actual URLs)
-        const LOGIN_SCRIPT_URL = 'YOUR_LOGIN_SCRIPT_URL_HERE';
-        const REGISTER_SCRIPT_URL = 'YOUR_REGISTER_SCRIPT_URL_HERE';
+        // Google Apps Script URLs
+        const LOGIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeYnrD-rV6hcsKLcEpcPlWc-7oEXL3x7n4Ny1hl-n-bU3z63B59EMqPOKRE7kZOB14/exec';
+        const REGISTER_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeYnrD-rV6hcsKLcEpcPlWc-7oEXL3x7n4Ny1hl-n-bU3z63B59EMqPOKRE7kZOB14/exec';
         const REDIRECT_URL = 'https://poyfaii.github.io/order-form/order-form.html';
 
         // DOM Elements
@@ -239,31 +239,31 @@
             });
 
             try {
-                // For demo purposes, we'll simulate login check
-                // Replace this with actual Google Sheets API call
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Simulate successful login (replace with actual validation)
-                const loginSuccess = true; // This should come from your Google Sheets validation
-                
-                if (loginSuccess) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'เข้าสู่ระบบสำเร็จ!',
-                        text: 'กำลังนำท่านเข้าสู่ระบบ...',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = REDIRECT_URL;
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'ข้อมูลไม่ถูกต้อง',
-                        text: 'ชื่อผู้ใช้หรือเบอร์โทรศัพท์ไม่ถูกต้อง',
-                        confirmButtonText: 'ลองใหม่'
-                    });
-                }
+                // Send login request to Google Sheets
+                sendToGoogleSheets(LOGIN_SCRIPT_URL, {
+                    action: 'login',
+                    name: name,
+                    phone: phone
+                }, (response) => {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'เข้าสู่ระบบสำเร็จ!',
+                            text: 'กำลังนำท่านเข้าสู่ระบบ...',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = REDIRECT_URL;
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ข้อมูลไม่ถูกต้อง',
+                            text: 'ชื่อผู้ใช้หรือเบอร์โทรศัพท์ไม่ถูกต้อง',
+                            confirmButtonText: 'ลองใหม่'
+                        });
+                    }
+                });
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
@@ -302,27 +302,32 @@
             });
 
             try {
-                // Send data to Google Sheets via JSONP
-                const data = {
+                // Send registration data to Google Sheets
+                sendToGoogleSheets(REGISTER_SCRIPT_URL, {
+                    action: 'register',
                     name: name,
-                    phone: phone,
-                    timestamp: new Date().toLocaleString('th-TH')
-                };
-
-                // For demo purposes, simulate registration
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'สมัครสมาชิกสำเร็จ!',
-                    text: 'กรุณาลงชื่อเข้าใช้',
-                    confirmButtonText: 'ตกลง'
-                }).then(() => {
-                    registerPopup.classList.add('hidden');
-                    registerForm.reset();
-                    loginPopup.classList.remove('hidden');
+                    phone: phone
+                }, (response) => {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สมัครสมาชิกสำเร็จ!',
+                            text: 'กรุณาลงชื่อเข้าใช้',
+                            confirmButtonText: 'ตกลง'
+                        }).then(() => {
+                            registerPopup.classList.add('hidden');
+                            registerForm.reset();
+                            loginPopup.classList.remove('hidden');
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: response.message || 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง',
+                            confirmButtonText: 'ตกลง'
+                        });
+                    }
                 });
-
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
@@ -351,5 +356,5 @@
             document.body.appendChild(script);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'967947438539ce9b',t:'MTc1MzkyNDg4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'967968e2c7ba33b6',t:'MTc1MzkyNjI1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
