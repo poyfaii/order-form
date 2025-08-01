@@ -56,66 +56,58 @@
     <button onclick="showRegister()">สมัครสมาชิก</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzL6cUbWWvogpWpIAwPjOdidFCAsUNH938BnYWAfY3A67vVhqe7pNaz1G10e9BaXo3S/exec';
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const scriptURL = 'https://script.google.com/macros/s/.../exec';
 
-    function showLogin() {
-      Swal.fire({
-        title: 'ลงชื่อเข้าใช้',
-        html:
-          '<input id="login-username" class="swal2-input" placeholder="ชื่อผู้ใช้">' +
-          '<input id="login-password" type="password" class="swal2-input" placeholder="รหัสผ่าน">',
-        confirmButtonText: 'Login',
-        preConfirm: () => {
-          const username = document.getElementById('login-username').value.trim();
-          const password = document.getElementById('login-password').value.trim();
-          if (!username || !password) {
-            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
-            return false;
-          }
-          return fetch(`${scriptURL}?action=login&username=${username}&password=${password}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                window.location.href = 'https://poyfaii.github.io/order-form/order-form.html'; // เปลี่ยนลิงก์ตามโปรเจกต์จริง
-              } else {
-                Swal.showValidationMessage(data.message);
-              }
-            })
-            .catch(() => Swal.showValidationMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
-        }
-      });
-    }
+  function showRegister() {
+    Swal.fire({
+      title: 'สมัครสมาชิก',
+      html:
+        `<input id="u" class="swal2-input" placeholder="ชื่อผู้ใช้">` +
+        `<input id="p" class="swal2-input" type="password" placeholder="รหัสผ่าน">`,
+      confirmButtonText: 'สมัครสมาชิก',
+      preConfirm: () => new Promise((resolve,reject) => {
+        const u = document.getElementById('u').value.trim();
+        const p = document.getElementById('p').value.trim();
+        if (!u||!p) return reject('กรุณากรอกข้อมูลให้ครบถ้วน');
+        window.jsonpCallback = data => {
+          delete window.jsonpCallback;
+          resolve(data);
+        };
+        const script = document.createElement('script');
+        script.src = `${scriptURL}?action=register&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&callback=jsonpCallback`;
+        script.onerror = () => reject('เชื่อมต่อไม่สำเร็จ');
+        document.body.appendChild(script);
+      }),
+    }).then(result => {
+      if (result.value.success) Swal.fire('สำเร็จ','สมัครสมาชิกสำเร็จ กรุณาลงชื่อเข้าใช้','success');
+      else Swal.fire('ผิดพลาด',result.value.message,'error');
+    }).catch(msg => Swal.showValidationMessage(msg));
+  }
 
-    function showRegister() {
-      Swal.fire({
-        title: 'สมัครสมาชิก',
-        html:
-          '<input id="register-username" class="swal2-input" placeholder="ชื่อผู้ใช้">' +
-          '<input id="register-password" type="password" class="swal2-input" placeholder="รหัสผ่าน">',
-        confirmButtonText: 'สมัครสมาชิก',
-        preConfirm: () => {
-          const username = document.getElementById('register-username').value.trim();
-          const password = document.getElementById('register-password').value.trim();
-          if (!username || !password) {
-            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
-            return false;
-          }
-
-          return fetch(`${scriptURL}?action=register&username=${username}&password=${password}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire('สำเร็จ', 'สมัครสมาชิกสำเร็จ กรุณาลงชื่อเข้าใช้', 'success');
-              } else {
-                Swal.showValidationMessage(data.message);
-              }
-            })
-            .catch(() => Swal.showValidationMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
-        }
-      });
-    }
-  </script>
+  function showLogin() {
+    Swal.fire({
+      title: 'เข้าสู่ระบบ',
+      html:
+        `<input id="u" class="swal2-input" placeholder="ชื่อผู้ใช้">` +
+        `<input id="p" class="swal2-input" type="password" placeholder="รหัสผ่าน">`,
+      confirmButtonText: 'Login',
+      preConfirm: () => new Promise((resolve,reject) => {
+        const u = document.getElementById('u').value.trim();
+        const p = document.getElementById('p').value.trim();
+        if (!u||!p) return reject('กรุณากรอกข้อมูลให้ครบถ้วน');
+        window.jsonpCal = data => { delete window.jsonpCal; resolve(data); };
+        const script = document.createElement('script');
+        script.src = `${scriptURL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&callback=jsonpCal`;
+        script.onerror = () => reject('เชื่อมต่อไม่สำเร็จ');
+        document.body.appendChild(script);
+      })
+    }).then(result => {
+      if (result.value.success) window.location.href = 'https://poyfaii.github.io/order-form/order-form.html';
+      else Swal.fire('ผิดพลาด', result.value.message, 'error');
+    }).catch(msg => Swal.showValidationMessage(msg));
+  }
+</script>
 </body>
 </html>
