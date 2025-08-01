@@ -3,96 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบสมาชิก</title>
+  <title>เข้าสู่ระบบ - ร้านแม่ดอนโอทอป</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
-      font-family: 'Prompt', sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 300px;
-    }
-    h2 {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ffe9e3, #ffd3b4);
       text-align: center;
-      color: #333;
+      margin: 0;
+      padding: 0;
     }
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    header {
+      background-color: #ff6b6b;
+      color: white;
+      padding: 20px;
+      font-size: 1.6em;
     }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #4CAF50;
+    .btn {
+      margin: 20px auto;
+      padding: 15px 30px;
+      font-size: 1em;
+      background-color: #ff6b6b;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 10px;
     }
-    button:hover {
-      background: #45a049;
+    .btn:hover {
+      background-color: #ff3b3b;
     }
-    .message {
-      margin-top: 15px;
-      text-align: center;
-      color: #d33;
+    @media (max-width: 600px) {
+      .btn {
+        width: 80%;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>เข้าสู่ระบบ / สมัครสมาชิก</h2>
-  <input type="text" id="username" placeholder="ชื่อผู้ใช้">
-  <input type="password" id="password" placeholder="รหัสผ่าน">
-  <button onclick="login()">เข้าสู่ระบบ</button>
-  <button onclick="register()">สมัครสมาชิก</button>
-  <div class="message" id="message"></div>
-</div>
+  <header>ร้านแม่ดอนโอทอป</header>
 
-<script>
-  const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzL6cUbWWvogpWpIAwPjOdidFCAsUNH938BnYWAfY3A67vVhqe7pNaz1G10e9BaXo3S/exec';
+  <button class="btn" onclick="showLogin()">ลงชื่อเข้าใช้</button>
+  <button class="btn" onclick="showRegister()">สมัครสมาชิก</button>
 
-  function showMessage(text, isSuccess = false) {
-    const msg = document.getElementById('message');
-    msg.textContent = text;
-    msg.style.color = isSuccess ? 'green' : 'red';
-  }
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzL6cUbWWvogpWpIAwPjOdidFCAsUNH938BnYWAfY3A67vVhqe7pNaz1G10e9BaXo3S/exec';
 
-  async function login() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!username || !password) return showMessage('กรุณากรอกข้อมูลให้ครบ');
+    function showLogin() {
+      Swal.fire({
+        title: 'ลงชื่อเข้าใช้',
+        html:
+          '<input id="swal-username" class="swal2-input" placeholder="ชื่อผู้ใช้">' +
+          '<input id="swal-password" class="swal2-input" placeholder="รหัสผ่าน" type="password">',
+        confirmButtonText: 'Login',
+        showCancelButton: true,
+        preConfirm: () => {
+          const username = document.getElementById('swal-username').value;
+          const password = document.getElementById('swal-password').value;
 
-    const res = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-    const data = await res.json();
-    showMessage(data.message, data.success);
-  }
+          if (!username || !password) {
+            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ');
+            return false;
+          }
 
-  async function register() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!username || !password) return showMessage('กรุณากรอกข้อมูลให้ครบ');
+          return fetch(`${scriptURL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                window.location.href = 'https://poyfaii.github.io/order-form/order-form.html';
+              } else {
+                Swal.showValidationMessage(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+              }
+            })
+            .catch(() => {
+              Swal.showValidationMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+        }
+      });
+    }
 
-    const res = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=register&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-    const data = await res.json();
-    showMessage(data.message, data.success);
-  }
-</script>
+    function showRegister() {
+      Swal.fire({
+        title: 'สมัครสมาชิก',
+        html:
+          '<input id="swal-new-username" class="swal2-input" placeholder="ชื่อผู้ใช้">' +
+          '<input id="swal-new-password" class="swal2-input" placeholder="รหัสผ่าน" type="password">',
+        confirmButtonText: 'สมัครสมาชิก',
+        showCancelButton: true,
+        preConfirm: () => {
+          const username = document.getElementById('swal-new-username').value;
+          const password = document.getElementById('swal-new-password').value;
 
+          if (!username || !password) {
+            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ');
+            return false;
+          }
+
+          return fetch(`${scriptURL}?action=register&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire('สำเร็จ!', 'สมัครสมาชิกสำเร็จ กรุณาลงชื่อเข้าใช้', 'success');
+              } else {
+                Swal.showValidationMessage(data.message || 'สมัครสมาชิกไม่สำเร็จ');
+              }
+            })
+            .catch(() => {
+              Swal.showValidationMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            });
+        }
+      });
+    }
+  </script>
 </body>
 </html>
