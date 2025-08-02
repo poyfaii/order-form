@@ -149,14 +149,12 @@
     }
 
   // รันทันทีหลังโหลด DOM เสร็จ (เร็วกว่า window.onload)
-document.addEventListener('DOMContentLoaded', function () {
-    const params = new URLSearchParams(window.location.search);
-    const customerName = params.get('customerName');
-    const customerPhone = params.get('customerPhone');
-
-    if (customerName && customerPhone) {
-        document.getElementById('customerName').value = decodeURIComponent(customerName);
-        document.getElementById('customerPhone').value = decodeURIComponent(customerPhone);
+// ✅ ดึงข้อมูลลูกค้าจาก sessionStorage แล้วใส่ใน input
+document.addEventListener('DOMContentLoaded', () => {
+    const customer = JSON.parse(sessionStorage.getItem('customer'));
+    if (customer) {
+        document.getElementById('customerName').value = `${customer.firstName} ${customer.lastName || ''}`.trim();
+        document.getElementById('customerPhone').value = customer.phone;
     }
 });
 </script>
