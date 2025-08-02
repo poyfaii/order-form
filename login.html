@@ -179,8 +179,7 @@
                         timer: 1500,
                         timerProgressBar: true,
                         didClose: () => {
-                            window.location.href = "https://poyfaii.github.io/order-form/order-form.html";
-                        }
+                            window.location.href = `https://poyfaii.github.io/order-form/order-form.html?customerName=${encodeURIComponent(username)}&customerPhone=${encodeURIComponent(phone)}`;
                     });
                 } else {
                     Swal.fire({
