@@ -170,17 +170,24 @@
             // ส่ง request แบบ JSONP
             jsonp(loginUrl, callbackName, (response) => {
                 if (response.status === 'success') {
-                    // ใช้โค้ด SweetAlert2 ที่คุณให้มา
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'ลงชื่อเข้าใช้สำเร็จ!',
-                        text: 'กำลังนำคุณไปยังหน้าจัดการออร์เดอร์',
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true,
-                        didClose: () => {
-                            window.location.href = `https://poyfaii.github.io/order-form/order-form.html?customerName=${encodeURIComponent(username)}&customerPhone=${encodeURIComponent(phone)}`;
-                    });
+    const customer = {
+        firstName: username,
+        lastName: '',  // เพิ่มภายหลังหากมีระบบแยกชื่อ-นามสกุล
+        phone: phone
+    };
+    sessionStorage.setItem('customer', JSON.stringify(customer));
+
+    Swal.fire({
+        icon: 'success',
+        title: 'ลงชื่อเข้าใช้สำเร็จ!',
+        text: 'กำลังนำคุณไปยังหน้าจัดการออร์เดอร์',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        didClose: () => {
+            window.location.href = 'https://poyfaii.github.io/order-form/order-form.html';
+        }
+    });
                 } else {
                     Swal.fire({
                         icon: 'error',
