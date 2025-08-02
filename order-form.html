@@ -148,14 +148,17 @@
       }
     }
 
-    // ✅ ดึงข้อมูลลูกค้าจาก sessionStorage แล้วใส่ใน input
-    const customer = JSON.parse(sessionStorage.getItem('customer'));
-    if (customer) {
-      document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('customerName').value = `${customer.firstName} ${customer.lastName}`;
-        document.getElementById('customerPhone').value = customer.phone;
-      });
+  // รันทันทีหลังโหลด DOM เสร็จ (เร็วกว่า window.onload)
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const customerName = params.get('customerName');
+    const customerPhone = params.get('customerPhone');
+
+    if (customerName && customerPhone) {
+        document.getElementById('customerName').value = decodeURIComponent(customerName);
+        document.getElementById('customerPhone').value = decodeURIComponent(customerPhone);
     }
+});
 </script>
 
   <style>
