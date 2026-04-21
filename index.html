@@ -1,476 +1,204 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work Calendar</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<title>WorkCal Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root {
-  --bg:       #0d0d14;
-  --surface:  rgba(255,255,255,0.04);
-  --surface2: rgba(255,255,255,0.07);
-  --border:   rgba(255,255,255,0.09);
-  --border2:  rgba(255,255,255,0.16);
-  --text:     #f0eeff;
-  --text2:    #9490b8;
-  --text3:    #4e4a6a;
-  --p1: #a78bfa;
-  --p2: #f472b6;
-  --p3: #34d399;
-  --p4: #fbbf24;
-  --p5: #60a5fa;
-  --grad:  linear-gradient(135deg,#a78bfa,#f472b6);
-  --grad2: linear-gradient(135deg,#34d399,#60a5fa);
-  --r:    16px;
-  --r-sm: 10px;
+:root{
+  --bg:#0f0f1a;
+  --card:#1b1b2b;
+  --border:#2a2a3d;
+  --text:#fff;
+  --sub:#9aa0c3;
+  --main:#a78bfa;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-html{font-size:14px;}
-body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min-height:100vh;overflow-x:hidden;}
 
-body::before,body::after{content:’’;position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(130px);opacity:.16;}
-body::before{width:700px;height:700px;background:radial-gradient(circle,#a78bfa,transparent 70%);top:-250px;left:-200px;}
-body::after{width:600px;height:600px;background:radial-gradient(circle,#f472b6,transparent 70%);bottom:-200px;right:-150px;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Sarabun',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-.shell{position:relative;z-index:1;display:grid;grid-template-columns:300px 1fr;grid-template-rows:60px 1fr;min-height:100vh;}
-@media(max-width:860px){.shell{grid-template-columns:1fr;}}
+/* header */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+}
 
-/* Topbar */
-.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(13,13,20,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(–-border);position:sticky;top:0;z-index:200;}
-.brand{display:flex;align-items:center;gap:10px;}
-.brand-icon{width:34px;height:34px;border-radius:10px;background:var(–grad);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 20px rgba(167,139,250,.4);}
-.brand-name{font-family:‘Plus Jakarta Sans’,sans-serif;font-weight:800;font-size:15px;letter-spacing:-.3px;}
-.brand-name span{background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.clock-pill{background:var(–surface2);border:1px solid var(-–border);border-radius:99px;padding:5px 14px;font-size:12px;color:var(–text2);display:flex;align-items:center;gap:8px;}
-.clock-pill #clock-time{color:var(–p1);font-weight:700;font-size:13px;}
-.btn-add-top{background:var(–grad);border:none;border-radius:99px;padding:8px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;box-shadow:0 4px 20px rgba(167,139,250,.35);transition:transform .15s,box-shadow .15s;display:flex;align-items:center;gap:6px;}
-.btn-add-top:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(167,139,250,.5);}
-.btn-add-top:active{transform:scale(.97);}
+.title{
+  font-size:18px;
+  font-weight:700;
+}
 
-/* Sidebar */
-.sidebar{border-right:1px solid var(–-border);padding:20px 0;overflow-y:auto;background:rgba(13,13,20,.5);backdrop-filter:blur(10px);}
+.btn{
+  background:var(--main);
+  border:none;
+  color:#fff;
+  padding:8px 16px;
+  border-radius:20px;
+  cursor:pointer;
+}
 
-/* Stats */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 16px;}
-.stat-card{border-radius:var(–r-sm);padding:14px;border:1px solid var(–-border);background:var(–surface);position:relative;overflow:hidden;transition:border-color .2s,transform .2s;}
-.stat-card:hover{border-color:var(–border2);transform:translateY(-1px);}
-.stat-card::before{content:’’;position:absolute;inset:0;opacity:.07;border-radius:inherit;}
-.sc1::before{background:var(–p5)}.sc2::before{background:var(–p3)}.sc3::before{background:var(–p4)}.sc4::before{background:var(–p2)}
-.stat-n{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:28px;font-weight:800;line-height:1;}
-.sc1 .stat-n{color:var(–p5)}.sc2 .stat-n{color:var(–p3)}.sc3 .stat-n{color:var(–p4)}.sc4 .stat-n{color:var(–p2)}
-.stat-l{font-size:11px;color:var(–text2);margin-top:4px;}
+/* calendar */
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  padding:10px;
+}
 
-/* Progress */
-.prog-section{padding:0 16px 16px;border-bottom:1px solid var(–-border);}
-.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.prog-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(–text3);}
-.prog-pct{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:13px;font-weight:800;background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.prog-track{height:5px;background:var(–surface2);border-radius:99px;overflow:hidden;}
-.prog-fill{height:100%;border-radius:99px;background:var(–grad);transition:width .6s cubic-bezier(.4,0,.2,1);}
+.day{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  min-height:70px;
+  padding:6px;
+  font-size:12px;
+  cursor:pointer;
+}
 
-/* Alerts */
-.alert-area{padding:0 16px 4px;}
-.alert-chip{display:flex;gap:8px;align-items:flex-start;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:var(–r-sm);padding:9px 12px;margin-bottom:6px;font-size:12px;color:var(–p2);animation:chipIn .25s ease;}
-.alert-chip.warn{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2);color:var(–p4);}
-@keyframes chipIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.day:hover{
+  border-color:var(--main);
+}
 
-/* Sidebar sections */
-.sb-section{padding:14px 16px;}
-.sb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(–text3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.sb-label::after{content:’’;flex:1;height:1px;background:var(-–border);}
-.tt-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(–r-sm);margin-bottom:4px;cursor:pointer;border:1px solid transparent;transition:all .15s;}
-.tt-item:hover{background:var(–surface2);border-color:var(–-border);}
-.tt-pip{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.tt-body{flex:1;min-width:0;}
-.tt-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tt-name.done-text{text-decoration:line-through;color:var(–text3);}
-.tt-meta{font-size:10px;color:var(–text3);margin-top:1px;}
+.day-num{
+  font-weight:700;
+  margin-bottom:4px;
+}
 
-/* Main */
-.main{padding:20px;overflow-y:auto;}
-.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.cal-title{flex:1;font-family:‘Plus Jakarta Sans’,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;}
-.cal-title span{background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.btn-nav{width:32px;height:32px;border-radius:8px;background:var(–surface2);border:1px solid var(–-border);color:var(–text2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.btn-nav:hover{background:var(–grad);border-color:transparent;color:#fff;}
-.btn-today{background:var(–surface2);border:1px solid var(-–border);color:var(–text2);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:‘Sarabun’,sans-serif;transition:all .15s;}
-.btn-today:hover{border-color:var(–p1);color:var(–p1);}
+.task{
+  font-size:10px;
+  background:#2a2a3d;
+  border-radius:6px;
+  padding:2px 5px;
+  margin-bottom:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-/* Calendar */
-.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;}
-.cal-wd{text-align:center;font-size:11px;font-weight:700;color:var(–text3);text-transform:uppercase;padding:5px 0;letter-spacing:.5px;}
-.cal-wd:first-child{color:var(–p2);}
-.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-.cal-cell{background:var(–surface);border:1px solid var(-–border);border-radius:var(–r-sm);min-height:88px;padding:7px;cursor:pointer;transition:all .18s;overflow:hidden;}
-.cal-cell:hover{border-color:var(–p1);background:var(–surface2);transform:translateY(-1px);}
-.cal-cell.other-month{opacity:.25;pointer-events:none;}
-.cal-cell.is-today{border-color:var(–p1);background:rgba(167,139,250,.08);box-shadow:0 0 0 1px rgba(167,139,250,.25);}
-.cal-cell.selected{border-color:var(–p2);background:rgba(244,114,182,.07);box-shadow:0 0 0 1px rgba(244,114,182,.25);}
-.cal-cell.has-overdue{border-color:rgba(244,114,182,.35);}
-.cal-cell.sunday .cell-num{color:var(–p2);}
-.cell-num{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:13px;font-weight:700;color:var(–text2);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
-.is-today .cell-num{background:var(–grad);color:#fff;box-shadow:0 2px 10px rgba(167,139,250,.5);font-size:12px;}
-.cell-chips{display:flex;flex-direction:column;gap:2px;}
-.c-chip{font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c-done{background:rgba(52,211,153,.15);color:var(–p3);}
-.c-inprog{background:rgba(167,139,250,.15);color:var(–p1);}
-.c-todo{background:var(–surface2);color:var(–text3);}
-.c-overdue{background:rgba(244,114,182,.15);color:var(–p2);}
-.c-more{font-size:10px;color:var(–text3);padding-left:4px;}
+/* modal */
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
 
-/* Day panel */
-.day-panel{margin-top:16px;background:var(–surface);border:1px solid var(–-border);border-radius:var(–r);overflow:hidden;backdrop-filter:blur(10px);}
-.dp-header{padding:16px 20px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(244,114,182,.08));border-bottom:1px solid var(–-border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.dp-title{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:16px;font-weight:800;}
-.dp-sub{font-size:12px;color:var(–text2);margin-top:2px;}
-.btn-add-day{background:var(–grad);border:none;border-radius:99px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;white-space:nowrap;box-shadow:0 4px 14px rgba(167,139,250,.3);transition:transform .15s,box-shadow .15s;}
-.btn-add-day:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(167,139,250,.45);}
-.dp-body{padding:14px 20px;}
+.modal{
+  background:var(--card);
+  padding:20px;
+  border-radius:14px;
+  width:90%;
+  max-width:400px;
+}
 
-/* Task row */
-.task-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(–r-sm);margin-bottom:7px;border:1px solid var(–-border);background:var(–surface);transition:all .18s;animation:rowIn .2s ease both;}
-@keyframes rowIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.task-row:hover{border-color:var(–border2);background:var(–surface2);}
-.task-row.row-done{opacity:.5;}
-.row-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(–border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;}
-.row-check:hover{border-color:var(–p3);}
-.task-row.row-done .row-check{background:var(–p3);border-color:var(–p3);color:#0d0d14;font-weight:900;}
-.row-left{flex:1;min-width:0;}
-.row-name{font-size:13px;font-weight:600;}
-.task-row.row-done .row-name{text-decoration:line-through;color:var(–text3);}
-.row-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
-.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.3px;}
-.tag-daily{background:rgba(52,211,153,.12);color:var(–p3);}
-.tag-weekly{background:rgba(96,165,250,.12);color:var(–p5);}
-.tag-monthly{background:rgba(251,191,36,.12);color:var(–p4);}
-.tag-special{background:rgba(167,139,250,.12);color:var(–p1);}
-.tag-done{background:rgba(52,211,153,.12);color:var(–p3);}
-.tag-inprog{background:rgba(167,139,250,.12);color:var(–p1);}
-.tag-todo{background:var(–surface2);color:var(–text3);border:1px solid var(–-border);}
-.tag-overdue{background:rgba(244,114,182,.12);color:var(–p2);}
-.row-prog{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.mini-track{width:56px;height:4px;background:var(–surface2);border-radius:99px;overflow:hidden;}
-.mini-fill{height:100%;border-radius:99px;background:var(–grad);transition:width .4s;}
-.pct-num{font-size:11px;color:var(–text2);min-width:28px;font-weight:600;}
-.row-actions{display:flex;gap:5px;flex-shrink:0;}
-.row-btn{width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;border:1px solid var(–-border);transition:all .15s;}
-.row-btn.edit{background:var(–surface2);color:var(–text2);}
-.row-btn.edit:hover{background:rgba(96,165,250,.15);border-color:var(–p5);color:var(–p5);}
-.row-btn.del{background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.25);color:var(–p2);}
-.row-btn.del:hover{background:var(–p2);border-color:var(–p2);color:#0d0d14;}
-.no-tasks{text-align:center;padding:28px;color:var(–text3);font-size:13px;}
-.no-tasks-icon{font-size:36px;margin-bottom:8px;opacity:.5;}
+.input{
+  width:100%;
+  margin-bottom:10px;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#12121f;
+  color:#fff;
+}
 
-/* Modal */
-.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease;}
-.modal-overlay.hidden{display:none;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal{background:#13121e;border:1px solid var(–border2);border-radius:20px;padding:26px;width:430px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(167,139,250,.1);animation:modalUp .22s cubic-bezier(.34,1.5,.64,1);}
-@keyframes modalUp{from{opacity:0;transform:translateY(20px)scale(.96)}to{opacity:1;transform:none}}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.modal-title{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:18px;font-weight:800;background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.modal-x{width:30px;height:30px;border-radius:8px;background:var(–surface2);border:1px solid var(-–border);color:var(–text2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.modal-x:hover{background:rgba(244,114,182,.15);border-color:var(–p2);color:var(–p2);}
-.f-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(–text3);margin-bottom:6px;}
-.f-input,.f-select{width:100%;background:var(–surface2);border:1px solid var(–-border);color:var(–text);border-radius:10px;padding:10px 13px;font-size:13px;font-family:‘Sarabun’,sans-serif;outline:none;transition:border .15s;}
-.f-input:focus,.f-select:focus{border-color:var(–p1);box-shadow:0 0 0 3px rgba(167,139,250,.12);}
-.f-select option{background:#13121e;}
-.f-field{margin-bottom:14px;}
-.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
-.btn-cancel{background:var(–surface2);border:1px solid var(–-border);color:var(–text2);border-radius:99px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:‘Sarabun’,sans-serif;transition:all .15s;}
-.btn-cancel:hover{background:var(–surface);border-color:var(–-border2);}
-.btn-save{background:var(–grad);border:none;border-radius:99px;padding:10px 26px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;box-shadow:0 4px 16px rgba(167,139,250,.35);transition:transform .15s,box-shadow .15s;}
-.btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(167,139,250,.5);}
-
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(–border2);border-radius:99px;}
+.actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
 </style>
-
 </head>
+
 <body>
-<div class="shell">
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-icon">🗓</div>
-      <div><div class="brand-name">Work<span>Cal</span></div></div>
-    </div>
-    <div class="topbar-right">
-      <div class="clock-pill">
-        <span id="clock-time">--:--</span>
-        <span style="color:var(--text3)">|</span>
-        <span id="clock-date" style="font-size:11px;color:var(--text2)">--</span>
-      </div>
-      <button class="btn-add-top" onclick="openModal()">＋ เพิ่มงาน</button>
-    </div>
-  </div>
 
-  <div class="sidebar">
-    <div style="padding:0 16px 14px">
-      <div class="stats-grid">
-        <div class="stat-card sc1"><div class="stat-n" id="st-total">0</div><div class="stat-l">ทั้งหมด</div></div>
-        <div class="stat-card sc2"><div class="stat-n" id="st-done">0</div><div class="stat-l">เสร็จแล้ว</div></div>
-        <div class="stat-card sc3"><div class="stat-n" id="st-inprog">0</div><div class="stat-l">กำลังทำ</div></div>
-        <div class="stat-card sc4"><div class="stat-n" id="st-overdue">0</div><div class="stat-l">เกินกำหนด</div></div>
-      </div>
-    </div>
-    <div class="prog-section">
-      <div class="prog-header">
-        <span class="prog-label">ภาพรวมเดือนนี้</span>
-        <span class="prog-pct" id="prog-pct">0%</span>
-      </div>
-      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-    </div>
-    <div class="alert-area" id="alert-area"></div>
-    <div class="sb-section">
-      <div class="sb-label">วันนี้</div>
-      <div id="today-list"><div style="font-size:12px;color:var(--text3);padding:4px 0">ยังไม่มีงานวันนี้</div></div>
-    </div>
-    <div class="sb-section">
-      <div class="sb-label">ใกล้ครบกำหนด</div>
-      <div id="upcoming-list"><div style="font-size:12px;color:var(--text3);padding:4px 0">ไม่มีงานในช่วงนี้</div></div>
-    </div>
-  </div>
-
-  <div class="main">
-    <div class="cal-nav">
-      <div class="cal-title" id="cal-title">เดือน <span>—</span></div>
-      <button class="btn-today" onclick="goToday()">วันนี้</button>
-      <button class="btn-nav" onclick="prevMonth()">‹</button>
-      <button class="btn-nav" onclick="nextMonth()">›</button>
-    </div>
-    <div class="cal-weekdays">
-      <div class="cal-wd">อา</div><div class="cal-wd">จ</div><div class="cal-wd">อ</div>
-      <div class="cal-wd">พ</div><div class="cal-wd">พฤ</div><div class="cal-wd">ศ</div><div class="cal-wd">ส</div>
-    </div>
-    <div class="cal-days" id="cal-days"></div>
-    <div class="day-panel" id="day-panel" style="display:none">
-      <div class="dp-header">
-        <div>
-          <div class="dp-title" id="dp-title">—</div>
-          <div class="dp-sub" id="dp-sub">—</div>
-        </div>
-        <button class="btn-add-day" onclick="openModalForSelected()">＋ เพิ่มงาน</button>
-      </div>
-      <div class="dp-body" id="dp-body"></div>
-    </div>
-  </div>
+<div class="topbar">
+  <div class="title">📅 WorkCal Pro</div>
+  <button class="btn" onclick="openModal()">+ เพิ่มงาน</button>
 </div>
 
-<div class="modal-overlay hidden" id="modal-overlay">
+<div id="calendar" class="calendar"></div>
+
+<!-- modal -->
+<div class="modal-bg" id="modal">
   <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title" id="modal-title-text">เพิ่มงานใหม่</div>
-      <button class="modal-x" onclick="closeModal()">✕</button>
-    </div>
-    <div class="f-field">
-      <label class="f-label">ชื่องาน</label>
-      <input class="f-input" id="f-name" type="text" placeholder="เช่น ส่งรายงาน, ประชุมทีม..." />
-    </div>
-    <div class="f-row">
-      <div class="f-field">
-        <label class="f-label">ประเภท</label>
-        <select class="f-select" id="f-type">
-          <option value="daily">📗 รายวัน</option>
-          <option value="weekly">📘 รายสัปดาห์</option>
-          <option value="monthly">📙 รายเดือน</option>
-          <option value="special">🔖 พิเศษ</option>
-        </select>
-      </div>
-      <div class="f-field">
-        <label class="f-label">สถานะ</label>
-        <select class="f-select" id="f-status">
-          <option value="todo">รอทำ</option>
-          <option value="inprog">กำลังทำ</option>
-          <option value="done">เสร็จแล้ว</option>
-        </select>
-      </div>
-    </div>
-    <div class="f-row">
-      <div class="f-field">
-        <label class="f-label">วันกำหนดส่ง</label>
-        <input class="f-input" id="f-due" type="date" />
-      </div>
-      <div class="f-field">
-        <label class="f-label">% คืบหน้า</label>
-        <input class="f-input" id="f-pct" type="number" min="0" max="100" value="0" />
-      </div>
-    </div>
-    <div class="f-field">
-      <label class="f-label">หมายเหตุ</label>
-      <input class="f-input" id="f-note" type="text" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
-      <button class="btn-save" onclick="saveTask()">บันทึก ✦</button>
+    <input id="name" class="input" placeholder="ชื่องาน">
+    <input id="date" class="input" type="date">
+    <div class="actions">
+      <button class="btn" onclick="save()">บันทึก</button>
     </div>
   </div>
 </div>
 
 <script>
-const today=new Date(),todayStr=fmt(today);
-function fmt(d){return d.toISOString().split('T')[0];}
-function fmtThai(s){
-  if(!s)return'';
-  const[y,m,dd]=s.split('-');
-  const mo=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const dys=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-  const o=new Date(s+'T00:00:00');
-  return`${dys[o.getDay()]}ที่ ${+dd} ${mo[+m]} ${+y+543}`;
-}
-function daysUntil(s){return Math.round((new Date(s+'T00:00:00')-new Date(todayStr+'T00:00:00'))/86400000);}
+let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
 
-let tasks=JSON.parse(localStorage.getItem('wc_v3')||'null')||[];
-let nextId=tasks.length?Math.max(...tasks.map(t=>t.id))+1:1;
-let curYear=today.getFullYear(),curMonth=today.getMonth(),selDate=todayStr,editId=null;
-
-function save(){localStorage.setItem('wc_v3',JSON.stringify(tasks));}
-function isOverdue(t){return t.due&&t.status!=='done'&&t.due<todayStr;}
-
-const typeColors={daily:'#34d399',weekly:'#60a5fa',monthly:'#fbbf24',special:'#a78bfa'};
-const typeNames={daily:'รายวัน',weekly:'รายสัปดาห์',monthly:'รายเดือน',special:'พิเศษ'};
-const typeTagCls={daily:'tag-daily',weekly:'tag-weekly',monthly:'tag-monthly',special:'tag-special'};
-function chipCls(t){if(isOverdue(t))return'c-overdue';if(t.status==='done')return'c-done';if(t.status==='inprog')return'c-inprog';return'c-todo';}
-
-function renderSidebar(){
-  document.getElementById('st-total').textContent=tasks.length;
-  document.getElementById('st-done').textContent=tasks.filter(t=>t.status==='done').length;
-  document.getElementById('st-inprog').textContent=tasks.filter(t=>t.status==='inprog').length;
-  document.getElementById('st-overdue').textContent=tasks.filter(t=>isOverdue(t)).length;
-  const cm=`${curYear}-${String(curMonth+1).padStart(2,'0')}`;
-  const mt=tasks.filter(t=>t.due&&t.due.startsWith(cm));
-  const pct=mt.length?Math.round(mt.reduce((a,t)=>a+t.pct,0)/mt.length):0;
-  document.getElementById('prog-pct').textContent=pct+'%';
-  document.getElementById('prog-fill').style.width=pct+'%';
-  let ah='';
-  tasks.filter(t=>isOverdue(t)).slice(0,2).forEach(t=>{ah+=`<div class="alert-chip">⚠ <span><b>${t.name}</b><br><span style="opacity:.7;font-size:10px">${fmtThai(t.due)}</span></span></div>`;});
-  tasks.filter(t=>!isOverdue(t)&&t.due&&daysUntil(t.due)<=3&&t.status!=='done').slice(0,2).forEach(t=>{const d=daysUntil(t.due);ah+=`<div class="alert-chip warn">⏰ <span><b>${t.name}</b><br><span style="opacity:.7;font-size:10px">${d===0?'ครบกำหนดวันนี้!':'อีก '+d+' วัน'}</span></span></div>`;});
-  document.getElementById('alert-area').innerHTML=ah?`<div style="padding:12px 16px 4px">${ah}</div>`:'';
-  const tt=tasks.filter(t=>t.due===todayStr);
-  document.getElementById('today-list').innerHTML=tt.length?tt.map(t=>`<div class="tt-item" onclick="selectDate('${t.due}')"><div class="tt-pip" style="background:${typeColors[t.type]}"></div><div class="tt-body"><div class="tt-name ${t.status==='done'?'done-text':''}">${t.name}</div><div class="tt-meta">${typeNames[t.type]} · ${t.pct}%</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0">ยังไม่มีงานวันนี้</div>';
-  const up=tasks.filter(t=>t.due&&t.due!==todayStr&&daysUntil(t.due)>0&&daysUntil(t.due)<=7&&t.status!=='done').sort((a,b)=>a.due.localeCompare(b.due));
-  document.getElementById('upcoming-list').innerHTML=up.length?up.map(t=>`<div class="tt-item" onclick="selectDate('${t.due}')"><div class="tt-pip" style="background:${typeColors[t.type]}"></div><div class="tt-body"><div class="tt-name">${t.name}</div><div class="tt-meta">${fmtThai(t.due)} · อีก ${daysUntil(t.due)} วัน</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0">ไม่มีงานในช่วงนี้</div>';
+function saveData(){
+  localStorage.setItem("tasks",JSON.stringify(tasks));
 }
 
-const thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+function render(){
+  const cal = document.getElementById("calendar");
+  cal.innerHTML="";
+  
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
 
-function renderCalendar(){
-  const y=curYear,m=curMonth;
-  document.getElementById('cal-title').innerHTML=`${thaiMonths[m]} <span>${y+543}</span>`;
-  const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const cells=[];
-  for(let i=0;i<first.getDay();i++){const d=new Date(y,m,-first.getDay()+1+i);cells.push({date:fmt(d),cur:false});}
-  for(let d=1;d<=last.getDate();d++)cells.push({date:`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,cur:true});
-  const rem=(7-cells.length%7)%7;
-  for(let i=1;i<=rem;i++){const d=new Date(y,m+1,i);cells.push({date:fmt(d),cur:false});}
-  document.getElementById('cal-days').innerHTML=cells.map(c=>{
-    const dt=tasks.filter(t=>t.due===c.date);
-    const dow=new Date(c.date+'T00:00:00').getDay();
-    const chips=dt.slice(0,3).map(t=>`<div class="c-chip ${chipCls(t)}" title="${t.name}">${t.name}</div>`).join('');
-    const more=dt.length>3?`<div class="c-more">+${dt.length-3}</div>`:'';
-    return`<div class="cal-cell ${!c.cur?'other-month':''} ${c.date===todayStr?'is-today':''} ${c.date===selDate?'selected':''} ${dt.some(t=>isOverdue(t))?'has-overdue':''} ${dow===0?'sunday':''}" onclick="selectDate('${c.date}')">
-      <div class="cell-num">${+c.date.split('-')[2]}</div>
-      <div class="cell-chips">${chips}${more}</div>
-    </div>`;
-  }).join('');
+  const days = new Date(y,m+1,0).getDate();
+
+  for(let d=1; d<=days; d++){
+    const date = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayTasks = tasks.filter(t=>t.date===date);
+
+    const el = document.createElement("div");
+    el.className="day";
+    el.innerHTML = `
+      <div class="day-num">${d}</div>
+      ${dayTasks.map(t=>`<div class="task">${t.name}</div>`).join("")}
+    `;
+    el.onclick=()=>openModal(date);
+    cal.appendChild(el);
+  }
 }
 
-function selectDate(d){selDate=d;renderCalendar();renderDayPanel();}
-
-function renderDayPanel(){
-  document.getElementById('day-panel').style.display='block';
-  document.getElementById('dp-title').textContent=fmtThai(selDate);
-  const d=daysUntil(selDate);
-  document.getElementById('dp-sub').textContent=selDate===todayStr?'วันนี้':d===1?'พรุ่งนี้':d===-1?'เมื่อวาน':d>0?`อีก ${d} วัน`:`${Math.abs(d)} วันที่แล้ว`;
-  const dt=tasks.filter(t=>t.due===selDate);
-  if(!dt.length){document.getElementById('dp-body').innerHTML=`<div class="no-tasks"><div class="no-tasks-icon">✦</div>ยังไม่มีงานวันนี้<br><small style="color:var(--text3)">กด "+ เพิ่มงาน" เพื่อเริ่ม</small></div>`;return;}
-  document.getElementById('dp-body').innerHTML=dt.map(t=>`
-    <div class="task-row ${t.status==='done'?'row-done':''}">
-      <div class="row-check" onclick="toggleDone(${t.id})">${t.status==='done'?'✓':''}</div>
-      <div class="row-left">
-        <div class="row-name">${t.name}${t.note?` <span style="color:var(--text3);font-weight:400;font-size:11px">— ${t.note}</span>`:''}</div>
-        <div class="row-tags">
-          <span class="tag ${typeTagCls[t.type]}">${typeNames[t.type]}</span>
-          ${statusTag(t)}
-          ${isOverdue(t)?'<span class="tag tag-overdue">⚠ เกิน</span>':''}
-        </div>
-      </div>
-      <div class="row-prog">
-        <div class="mini-track"><div class="mini-fill" style="width:${t.pct}%"></div></div>
-        <span class="pct-num">${t.pct}%</span>
-      </div>
-      <div class="row-actions">
-        <button class="row-btn edit" onclick="openEditModal(${t.id})" title="แก้ไข">✎</button>
-        <button class="row-btn del" onclick="deleteTask(${t.id})" title="ลบ">✕</button>
-      </div>
-    </div>`).join('');
+function openModal(date=""){
+  document.getElementById("modal").style.display="flex";
+  document.getElementById("date").value=date;
 }
 
-function statusTag(t){
-  if(t.status==='done')return'<span class="tag tag-done">✓ เสร็จ</span>';
-  if(t.status==='inprog')return'<span class="tag tag-inprog">⟳ กำลังทำ</span>';
-  return'<span class="tag tag-todo">○ รอทำ</span>';
-}
-function toggleDone(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='done'?'todo':'done';t.pct=t.status==='done'?100:0;save();renderAll();}
-function deleteTask(id){tasks=tasks.filter(x=>x.id!==id);save();renderAll();}
-function prevMonth(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}renderAll();}
-function nextMonth(){curMonth++;if(curMonth>11){curMonth=0;curYear++;}renderAll();}
-function goToday(){curYear=today.getFullYear();curMonth=today.getMonth();selDate=todayStr;renderAll();}
+function save(){
+  const name=document.getElementById("name").value;
+  const date=document.getElementById("date").value;
 
-function openModal(date){
-  editId=null;
-  document.getElementById('modal-title-text').textContent='เพิ่มงานใหม่ ✦';
-  document.getElementById('f-name').value='';
-  document.getElementById('f-type').value='daily';
-  document.getElementById('f-status').value='todo';
-  document.getElementById('f-due').value=date||selDate||todayStr;
-  document.getElementById('f-pct').value=0;
-  document.getElementById('f-note').value='';
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('f-name').focus(),100);
-}
-function openModalForSelected(){openModal(selDate);}
-function openEditModal(id){
-  const t=tasks.find(x=>x.id===id);if(!t)return;
-  editId=id;
-  document.getElementById('modal-title-text').textContent='แก้ไขงาน ✦';
-  document.getElementById('f-name').value=t.name;
-  document.getElementById('f-type').value=t.type;
-  document.getElementById('f-status').value=t.status;
-  document.getElementById('f-due').value=t.due||'';
-  document.getElementById('f-pct').value=t.pct;
-  document.getElementById('f-note').value=t.note||'';
-  document.getElementById('modal-overlay').classList.remove('hidden');
-}
-function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
-function saveTask(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name){document.getElementById('f-name').focus();return;}
-  const type=document.getElementById('f-type').value,status=document.getElementById('f-status').value,
-    due=document.getElementById('f-due').value,
-    pct=Math.min(100,Math.max(0,parseInt(document.getElementById('f-pct').value)||0)),
-    note=document.getElementById('f-note').value.trim();
-  if(editId){Object.assign(tasks.find(x=>x.id===editId),{name,type,status,due,pct,note});}
-  else tasks.unshift({id:nextId++,name,type,due,pct,status,note});
-  save();closeModal();renderAll();
-}
-function updateClock(){
-  const n=new Date();
-  document.getElementById('clock-time').textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('clock-date').textContent=fmtThai(todayStr);
-}
-function renderAll(){renderCalendar();renderSidebar();if(selDate)renderDayPanel();}
+  if(!name || !date) return;
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-document.getElementById('f-name').addEventListener('keydown',e=>{if(e.key==='Enter')saveTask();});
+  tasks.push({name,date});
+  saveData();
+  closeModal();
+  render();
+}
 
-updateClock();setInterval(updateClock,30000);
-selectDate(todayStr);renderAll();
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+document.getElementById("modal").onclick=(e)=>{
+  if(e.target.id==="modal") closeModal();
+}
+
+render();
 </script>
 
 </body>
