@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Calendar Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Chivo+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --paper: #fdfcfa;
+  --ink: #1a1814;
+  --ink2: #6b6456;
+  --ink3: #b8b0a4;
+  --line: #e8e3dc;
+  --red: #d64f3c;
+  --blue: #2d6be4;
+  --green: #2a9d5c;
+  --amber: #e8952a;
+  --purple: #7c4dba;
+  --red-bg: #fdf1ef;
+  --blue-bg: #eef3fd;
+  --green-bg: #eef8f3;
+  --amber-bg: #fdf5e8;
+  --purple-bg: #f5f0fb;
+  --shadow: 0 2px 12px rgba(26,24,20,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,24,20,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:15px; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Sarabun', sans-serif;
+  min-height: 100vh;
+}
+
+/* Layout */
+.shell {
+display: grid;
+grid-template-columns: 320px 1fr;
+grid-template-rows: auto 1fr;
+min-height: 100vh;
+}
+@media(max-width:900px){
+.shell { grid-template-columns:1fr; }
+.sidebar { border-right:none; border-bottom:1px solid var(–line); }
+}
+
+/* Top bar */
+.topbar {
+grid-column: 1/-1;
+background: var(–paper);
+border-bottom: 1px solid var(–line);
+padding: 0 28px;
+height: 58px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+box-shadow: var(–shadow);
+position: sticky; top:0; z-index:100;
+}
+.brand { display:flex; align-items:center; gap:10px; }
+.brand-mark {
+width:32px; height:32px; background:var(–ink);
+border-radius:6px; display:flex; align-items:center; justify-content:center;
+color:#fff; font-size:15px;
+}
+.brand-name { font-weight:800; font-size:16px; letter-spacing:-0.5px; }
+.brand-sub { font-size:11px; color:var(–ink2); font-family:‘Chivo Mono’,monospace; }
+.topbar-right { display:flex; align-items:center; gap:16px; }
+.live-clock {
+font-family:‘Chivo Mono’,monospace; font-size:13px; color:var(–ink2);
+background:var(–bg); padding:6px 12px; border-radius:6px;
+border:1px solid var(–line);
+}
+.live-clock span { color:var(–blue); font-weight:700; }
+.btn-add-top {
+background:var(–ink); color:#fff; border:none;
+border-radius:8px; padding:8px 16px; font-size:13px; font-weight:600;
+cursor:pointer; font-family:‘Sarabun’,sans-serif;
+display:flex; align-items:center; gap:6px;
+transition:background .15s, transform .1s;
+}
+.btn-add-top:hover { background:#2d2a25; }
+.btn-add-top:active { transform:scale(.97); }
+
+/* Sidebar */
+.sidebar {
+background:var(–paper);
+border-right:1px solid var(–line);
+padding:20px 0;
+overflow-y:auto;
+}
+
+/* Stats */
+.stats-grid {
+display:grid; grid-template-columns:1fr 1fr;
+gap:8px; padding:0 16px 16px;
+border-bottom:1px solid var(–line);
+}
+.stat-box {
+background:var(–bg); border-radius:10px; padding:12px 14px;
+border:1px solid var(–line);
+}
+.stat-n {
+font-family:‘Chivo Mono’,monospace; font-size:26px; font-weight:700;
+line-height:1;
+}
+.stat-n.c-blue { color:var(–blue); }
+.stat-n.c-green { color:var(–green); }
+.stat-n.c-amber { color:var(–amber); }
+.stat-n.c-red { color:var(–red); }
+.stat-l { font-size:11px; color:var(–ink2); margin-top:3px; }
+
+/* Overall progress */
+.overall-prog {
+padding:14px 16px;
+border-bottom:1px solid var(–line);
+}
+.prog-row { display:flex; justify-content:space-between; margin-bottom:8px; }
+.prog-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(–ink2); }
+.prog-pct { font-family:‘Chivo Mono’,monospace; font-size:13px; font-weight:700; color:var(–blue); }
+.prog-track { height:6px; background:var(–line); border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:99px; background:var(–blue); transition:width .5s ease; }
+
+/* Today’s tasks */
+.sidebar-section {
+padding:14px 16px;
+}
+.sidebar-title {
+font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+color:var(–ink3); margin-bottom:10px; display:flex; align-items:center; gap:6px;
+}
+.sidebar-title::after { content:’’; flex:1; height:1px; background:var(–line); }
+
+.today-task {
+display:flex; align-items:flex-start; gap:8px;
+padding:8px 10px; border-radius:8px; margin-bottom:4px;
+cursor:pointer; transition:background .15s;
+border:1px solid transparent;
+}
+.today-task:hover { background:var(–bg); border-color:var(–line); }
+.tt-dot {
+width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0;
+}
+.tt-name { font-size:13px; line-height:1.4; flex:1; }
+.tt-name.done-text { text-decoration:line-through; color:var(–ink3); }
+.tt-time { font-size:11px; color:var(–ink3); font-family:‘Chivo Mono’,monospace; margin-top:1px; }
+
+/* Alerts */
+.alert-list { padding:0 16px 14px; }
+.alert-item {
+display:flex; gap:8px; align-items:flex-start;
+background:var(–red-bg); border:1px solid rgba(214,79,60,.2);
+border-radius:8px; padding:9px 11px; margin-bottom:6px;
+font-size:12px; color:var(–red);
+animation:pop .2s ease;
+}
+.alert-item.warn {
+background:var(–amber-bg); border-color:rgba(232,149,42,.2);
+color:#9a6012;
+}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* Main content */
+.main {
+padding:20px 24px;
+overflow-y:auto;
+}
+
+/* Calendar nav */
+.cal-nav {
+display:flex; align-items:center; gap:12px; margin-bottom:16px;
+}
+.cal-month-year {
+font-size:20px; font-weight:800; letter-spacing:-0.5px; flex:1;
+}
+.cal-month-year span { color:var(–blue); }
+.btn-nav {
+background:var(–paper); border:1px solid var(–line);
+width:32px; height:32px; border-radius:8px;
+cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;
+color:var(–ink2); transition:all .15s;
+}
+.btn-nav:hover { background:var(–ink); color:#fff; border-color:var(–ink); }
+.btn-today {
+background:var(–paper); border:1px solid var(–line);
+padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600;
+cursor:pointer; font-family:‘Sarabun’,sans-serif; color:var(–ink2);
+transition:all .15s;
+}
+.btn-today:hover { background:var(–blue); color:#fff; border-color:var(–blue); }
+
+/* Calendar grid */
+.cal-grid { }
+.cal-weekdays {
+display:grid; grid-template-columns:repeat(7,1fr);
+margin-bottom:4px;
+}
+.cal-wd {
+text-align:center; font-size:11px; font-weight:700;
+color:var(–ink3); text-transform:uppercase; padding:6px 0;
+letter-spacing:.5px;
+}
+.cal-wd:first-child { color:var(–red); }
+
+.cal-days {
+display:grid; grid-template-columns:repeat(7,1fr);
+gap:4px;
+}
+.cal-cell {
+background:var(–paper); border:1px solid var(–line);
+border-radius:10px; min-height:90px; padding:6px;
+cursor:pointer; transition:border-color .15s, box-shadow .15s;
+position:relative; overflow:hidden;
+}
+.cal-cell:hover { border-color:var(–blue); box-shadow:0 0 0 3px rgba(45,107,228,.1); }
+.cal-cell.other-month { opacity:.4; }
+.cal-cell.is-today {
+border-color:var(–blue); background:var(–blue-bg);
+box-shadow:0 0 0 2px rgba(45,107,228,.2);
+}
+.cal-cell.selected { border-color:var(–ink); box-shadow:0 0 0 2px rgba(26,24,20,.15); }
+.cal-cell.has-overdue { border-color:rgba(214,79,60,.4); }
+
+.cell-num {
+font-family:‘Chivo Mono’,monospace; font-size:13px; font-weight:700;
+margin-bottom:4px; width:22px; height:22px;
+display:flex; align-items:center; justify-content:center;
+border-radius:50%; color:var(–ink2);
+}
+.is-today .cell-num { background:var(–blue); color:#fff; }
+.cal-cell.sunday .cell-num { color:var(–red); }
+
+.cell-tasks { display:flex; flex-direction:column; gap:2px; }
+.cell-task-chip {
+font-size:10px; padding:1px 6px; border-radius:4px;
+font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+max-width:100%; cursor:pointer;
+}
+.chip-done { background:var(–green-bg); color:var(–green); }
+.chip-inprog { background:var(–blue-bg); color:var(–blue); }
+.chip-todo { background:var(–bg); color:var(–ink2); border:1px solid var(–line); }
+.chip-overdue { background:var(–red-bg); color:var(–red); }
+.more-chip { font-size:10px; color:var(–ink3); padding-left:4px; }
+
+/* Day panel */
+.day-panel {
+margin-top:16px; background:var(–paper); border:1px solid var(–line);
+border-radius:14px; overflow:hidden; box-shadow:var(–shadow);
+}
+.day-panel-header {
+background:var(–ink); color:#fff;
+padding:14px 18px; display:flex; align-items:center; justify-content:space-between;
+}
+.day-panel-title { font-size:15px; font-weight:700; }
+.day-panel-sub { font-size:12px; opacity:.6; font-family:‘Chivo Mono’,monospace; }
+.btn-add-day {
+background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25);
+color:#fff; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:600;
+cursor:pointer; font-family:‘Sarabun’,sans-serif; transition:background .15s;
+}
+.btn-add-day:hover { background:rgba(255,255,255,.25); }
+
+.day-panel-body { padding:14px 18px; }
+
+.task-row {
+display:flex; align-items:center; gap:10px;
+padding:10px 12px; border-radius:10px; margin-bottom:6px;
+border:1px solid var(–line); background:var(–bg);
+transition:border-color .15s, box-shadow .15s;
+animation:slideUp .2s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.task-row:hover { border-color:var(–blue); box-shadow:0 2px 8px rgba(45,107,228,.08); }
+.task-row.row-done { opacity:.6; }
+
+.row-check {
+width:18px; height:18px; border-radius:4px;
+border:2px solid var(–line); cursor:pointer; flex-shrink:0;
+display:flex; align-items:center; justify-content:center; font-size:10px;
+transition:all .2s;
+}
+.row-check:hover { border-color:var(–green); }
+.task-row.row-done .row-check { background:var(–green); border-color:var(–green); color:#fff; }
+
+.row-left { flex:1; min-width:0; }
+.row-name { font-size:13px; font-weight:500; }
+.task-row.row-done .row-name { text-decoration:line-through; color:var(–ink3); }
+.row-tags { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+
+.tag {
+font-size:10px; font-weight:600; padding:1px 7px; border-radius:99px;
+letter-spacing:.3px;
+}
+.tag-daily { background:var(–green-bg); color:var(–green); }
+.tag-weekly { background:var(–blue-bg); color:var(–blue); }
+.tag-monthly { background:var(–amber-bg); color:#9a6012; }
+.tag-done { background:var(–green-bg); color:var(–green); }
+.tag-inprog { background:var(–blue-bg); color:var(–blue); }
+.tag-todo { background:var(–bg); color:var(–ink2); border:1px solid var(–line); }
+.tag-overdue { background:var(–red-bg); color:var(–red); }
+
+.row-pct-wrap { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.mini-track { width:60px; height:4px; background:var(–line); border-radius:99px; overflow:hidden; }
+.mini-fill { height:100%; background:var(–blue); border-radius:99px; transition:width .3s; }
+.pct-num { font-family:‘Chivo Mono’,monospace; font-size:11px; color:var(–ink2); min-width:26px; }
+
+.row-actions { display:flex; gap:4px; flex-shrink:0; }
+.row-btn {
+background:var(–paper); border:1px solid var(–line);
+border-radius:7px; width:32px; height:32px;
+cursor:pointer; display:flex; align-items:center; justify-content:center;
+font-size:14px; color:var(–ink2); transition:all .15s;
+}
+.row-btn.del { color:var(–red); border-color:rgba(214,79,60,.3); background:var(–red-bg); }
+.row-btn.del:hover { background:var(–red); color:#fff; border-color:var(–red); }
+.row-btn.edit:hover { border-color:var(–blue); color:var(–blue); background:var(–blue-bg); }
+
+.no-tasks {
+text-align:center; padding:24px; color:var(–ink3); font-size:13px;
+}
+.no-tasks-icon { font-size:32px; margin-bottom:8px; }
+
+/* Modal */
+.modal-overlay {
+position:fixed; inset:0; background:rgba(26,24,20,.5);
+display:flex; align-items:center; justify-content:center; z-index:1000;
+backdrop-filter:blur(4px);
+animation:fadeIn .15s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-overlay.hidden { display:none; }
+.modal {
+background:var(–paper); border-radius:16px; padding:24px;
+width:420px; max-width:90vw; box-shadow:var(–shadow-lg);
+animation:modalPop .2s ease;
+}
+@keyframes modalPop{from{opacity:0;transform:scale(.95)translateY(8px)}to{opacity:1;transform:none}}
+.modal-title {
+font-size:17px; font-weight:800; margin-bottom:18px;
+display:flex; align-items:center; justify-content:space-between;
+}
+.modal-close {
+background:var(–bg); border:1px solid var(–line);
+width:28px; height:28px; border-radius:6px; cursor:pointer;
+display:flex; align-items:center; justify-content:center; font-size:14px;
+color:var(–ink2); transition:all .15s;
+}
+.modal-close:hover { background:var(–red-bg); color:var(–red); border-color:rgba(214,79,60,.3); }
+.form-field { margin-bottom:14px; }
+.form-field label {
+display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+letter-spacing:.8px; color:var(–ink2); margin-bottom:5px;
+}
+.form-field input, .form-field select, .form-field textarea {
+width:100%; background:var(–bg); border:1px solid var(–line);
+color:var(–ink); border-radius:8px; padding:9px 12px;
+font-size:13px; font-family:‘Sarabun’,sans-serif; outline:none;
+transition:border .15s;
+}
+.form-field input:focus, .form-field select:focus { border-color:var(–blue); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+.btn-cancel {
+background:var(–bg); border:1px solid var(–line); color:var(–ink2);
+border-radius:8px; padding:9px 18px; font-size:13px; font-weight:600;
+cursor:pointer; font-family:‘Sarabun’,sans-serif; transition:all .15s;
+}
+.btn-cancel:hover { background:var(–line); }
+.btn-save {
+background:var(–ink); color:#fff; border:none;
+border-radius:8px; padding:9px 22px; font-size:13px; font-weight:600;
+cursor:pointer; font-family:‘Sarabun’,sans-serif; transition:background .15s;
+}
+.btn-save:hover { background:#2d2a25; }
+
+/* Category dots */
+.cat-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+</style>
+
+</head>
+<body>
+
+<div class="shell">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">📅</div>
+      <div>
+        <div class="brand-name">Work Calendar</div>
+        <div class="brand-sub">ระบบติดตามงาน</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-clock"><span id="clock-time">--:--</span> &middot; <span id="clock-date">--</span></div>
+      <button class="btn-add-top" onclick="openModal()">＋ เพิ่มงาน</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+
+  <div class="sidebar">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-n c-blue" id="st-total">0</div>
+        <div class="stat-l">งานทั้งหมด</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n c-green" id="st-done">0</div>
+        <div class="stat-l">เสร็จแล้ว</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n c-amber" id="st-inprog">0</div>
+        <div class="stat-l">กำลังทำ</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n c-red" id="st-overdue">0</div>
+        <div class="stat-l">เกินกำหนด</div>
+      </div>
+    </div>
+
+```
+<!-- Progress -->
+<div class="overall-prog">
+  <div class="prog-row">
+    <span class="prog-label">ภาพรวมเดือนนี้</span>
+    <span class="prog-pct" id="prog-pct">0%</span>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<!-- Alerts -->
+<div class="alert-list" id="alert-list"></div>
+
+<!-- Today -->
+<div class="sidebar-section">
+  <div class="sidebar-title">วันนี้</div>
+  <div id="today-list"><div style="font-size:12px;color:var(--ink3);padding:4px">ยังไม่มีงานวันนี้</div></div>
+</div>
+
+<!-- Upcoming -->
+<div class="sidebar-section">
+  <div class="sidebar-title">ใกล้ครบกำหนด</div>
+  <div id="upcoming-list"><div style="font-size:12px;color:var(--ink3);padding:4px">ไม่มีงานในช่วงนี้</div></div>
+</div>
+```
+
+  </div>
+
+  <!-- Main Calendar -->
+
+  <div class="main">
+    <div class="cal-nav">
+      <div class="cal-month-year" id="cal-title">เดือน <span>—</span></div>
+      <button class="btn-today" onclick="goToday()">วันนี้</button>
+      <button class="btn-nav" onclick="prevMonth()">‹</button>
+      <button class="btn-nav" onclick="nextMonth()">›</button>
+    </div>
+
+```
+<div class="cal-weekdays">
+  <div class="cal-wd">อา</div><div class="cal-wd">จ</div><div class="cal-wd">อ</div>
+  <div class="cal-wd">พ</div><div class="cal-wd">พฤ</div><div class="cal-wd">ศ</div>
+  <div class="cal-wd">ส</div>
+</div>
+<div class="cal-days" id="cal-days"></div>
+
+<!-- Day Panel -->
+<div class="day-panel" id="day-panel" style="display:none">
+  <div class="day-panel-header">
+    <div>
+      <div class="day-panel-title" id="dp-title">วันที่เลือก</div>
+      <div class="day-panel-sub" id="dp-sub">—</div>
+    </div>
+    <button class="btn-add-day" onclick="openModalForSelected()">+ เพิ่มงานวันนี้</button>
+  </div>
+  <div class="day-panel-body" id="dp-body"></div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- Modal -->
+
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-title-text">เพิ่มงานใหม่</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-field">
+      <label>ชื่องาน</label>
+      <input type="text" id="f-name" placeholder="เช่น ส่งรายงานประจำเดือน..." />
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>ประเภท</label>
+        <select id="f-type">
+          <option value="daily">📗 รายวัน</option>
+          <option value="weekly">📘 รายสัปดาห์</option>
+          <option value="monthly">📙 รายเดือน</option>
+          <option value="special">🔖 พิเศษ/โปรเจกต์</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>สถานะ</label>
+        <select id="f-status">
+          <option value="todo">รอทำ</option>
+          <option value="inprog">กำลังทำ</option>
+          <option value="done">เสร็จแล้ว</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>วันกำหนดส่ง</label>
+        <input type="date" id="f-due" />
+      </div>
+      <div class="form-field">
+        <label>% คืบหน้า (0-100)</label>
+        <input type="number" id="f-pct" min="0" max="100" value="0" />
+      </div>
+    </div>
+    <div class="form-field">
+      <label>หมายเหตุ (ถ้ามี)</label>
+      <input type="text" id="f-note" placeholder="รายละเอียดเพิ่มเติม..." />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-save" onclick="saveTask()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Data ───────────────────────────────────────
+const today = new Date();
+const todayStr = fmt(today);
+
+function fmt(d){ return d.toISOString().split('T')[0]; }
+function fmtThai(s){
+  if(!s) return '';
+  const [y,m,dd]=s.split('-');
+  const mo=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const dys=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  const dateObj=new Date(s+'T00:00:00');
+  return `${dys[dateObj.getDay()]}ที่ ${+dd} ${mo[+m]} ${+y+543}`;
+}
+function daysUntil(s){
+  const d=new Date(s+'T00:00:00'), t=new Date(todayStr+'T00:00:00');
+  return Math.round((d-t)/86400000);
+}
+
+let tasks = JSON.parse(localStorage.getItem('wc_tasks2') || 'null') || defaultTasks();
+let nextId = Math.max(0,...tasks.map(t=>t.id))+1;
+let curYear = today.getFullYear();
+let curMonth = today.getMonth();
+let selDate = todayStr;
+let editId = null;
+
+function defaultTasks(){ return []; }
+
+function save(){ localStorage.setItem('wc_tasks2',JSON.stringify(tasks)); }
+
+function isOverdue(t){ return t.due && t.status!=='done' && t.due < todayStr; }
+function chipClass(t){
+  if(isOverdue(t)) return 'chip-overdue';
+  if(t.status==='done') return 'chip-done';
+  if(t.status==='inprog') return 'chip-inprog';
+  return 'chip-todo';
+}
+const typeColors={daily:'var(--green)',weekly:'var(--blue)',monthly:'var(--amber)',special:'var(--purple)'};
+const typeNames={daily:'รายวัน',weekly:'รายสัปดาห์',monthly:'รายเดือน',special:'พิเศษ'};
+const typeTagClass={daily:'tag-daily',weekly:'tag-weekly',monthly:'tag-monthly',special:'tag-inprog'};
+
+// ─── Sidebar ─────────────────────────────────────
+function renderSidebar(){
+  const total=tasks.length;
+  const done=tasks.filter(t=>t.status==='done').length;
+  const inprog=tasks.filter(t=>t.status==='inprog').length;
+  const overdue=tasks.filter(t=>isOverdue(t)).length;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-done').textContent=done;
+  document.getElementById('st-inprog').textContent=inprog;
+  document.getElementById('st-overdue').textContent=overdue;
+
+  // Progress for current month
+  const curM=`${curYear}-${String(curMonth+1).padStart(2,'0')}`;
+  const monthTasks=tasks.filter(t=>t.due && t.due.startsWith(curM));
+  const pct=monthTasks.length?Math.round(monthTasks.reduce((a,t)=>a+t.pct,0)/monthTasks.length):0;
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+
+  // Alerts
+  const alertEl=document.getElementById('alert-list');
+  let html='';
+  tasks.filter(t=>isOverdue(t)).slice(0,3).forEach(t=>{
+    html+=`<div class="alert-item">⚠ <b>${t.name}</b><br><span style="font-size:10px">${fmtThai(t.due)}</span></div>`;
+  });
+  tasks.filter(t=>!isOverdue(t)&&t.due&&daysUntil(t.due)<=3&&t.status!=='done').slice(0,3).forEach(t=>{
+    const d=daysUntil(t.due);
+    html+=`<div class="alert-item warn">⏰ <b>${t.name}</b><br><span style="font-size:10px">${d===0?'ครบกำหนดวันนี้!':'อีก '+d+' วัน'}</span></div>`;
+  });
+  alertEl.innerHTML=html;
+
+  // Today
+  const todayTasks=tasks.filter(t=>t.due===todayStr);
+  const todayEl=document.getElementById('today-list');
+  if(!todayTasks.length){ todayEl.innerHTML='<div style="font-size:12px;color:var(--ink3);padding:4px">ยังไม่มีงานวันนี้</div>'; }
+  else todayEl.innerHTML=todayTasks.map(t=>`
+    <div class="today-task" onclick="selectDate('${t.due}')">
+      <div class="tt-dot" style="background:${typeColors[t.type]}"></div>
+      <div>
+        <div class="tt-name ${t.status==='done'?'done-text':''}">${t.name}</div>
+        <div class="tt-time">${typeNames[t.type]} · ${t.pct}%</div>
+      </div>
+    </div>`).join('');
+
+  // Upcoming (next 7 days, not today)
+  const upcomingTasks=tasks.filter(t=>{
+    if(!t.due||t.status==='done'||t.due===todayStr) return false;
+    const d=daysUntil(t.due); return d>0&&d<=7;
+  }).sort((a,b)=>a.due.localeCompare(b.due));
+  const upEl=document.getElementById('upcoming-list');
+  if(!upcomingTasks.length){ upEl.innerHTML='<div style="font-size:12px;color:var(--ink3);padding:4px">ไม่มีงานในช่วงนี้</div>'; }
+  else upEl.innerHTML=upcomingTasks.map(t=>`
+    <div class="today-task" onclick="selectDate('${t.due}')">
+      <div class="tt-dot" style="background:${typeColors[t.type]}"></div>
+      <div>
+        <div class="tt-name">${t.name}</div>
+        <div class="tt-time">${fmtThai(t.due)} · อีก ${daysUntil(t.due)} วัน</div>
+      </div>
+    </div>`).join('');
+}
+
+// ─── Calendar ────────────────────────────────────
+const thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function renderCalendar(){
+  const y=curYear, m=curMonth;
+  document.getElementById('cal-title').innerHTML=`${thaiMonths[m]} <span>${y+543}</span>`;
+
+  const first=new Date(y,m,1);
+  const last=new Date(y,m+1,0);
+  const startDow=first.getDay();
+
+  const cells=[];
+  // prev month fill
+  for(let i=0;i<startDow;i++){
+    const d=new Date(y,m,-(startDow-1)+i);
+    cells.push({date:fmt(d),cur:false});
+  }
+  for(let d=1;d<=last.getDate();d++) cells.push({date:`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,cur:true});
+  // next month fill
+  const rem=(7-cells.length%7)%7;
+  for(let i=1;i<=rem;i++){
+    const d=new Date(y,m+1,i);
+    cells.push({date:fmt(d),cur:false});
+  }
+
+  const grid=document.getElementById('cal-days');
+  grid.innerHTML=cells.map(c=>{
+    const dayTasks=tasks.filter(t=>t.due===c.date);
+    const isToday=c.date===todayStr;
+    const isSel=c.date===selDate;
+    const hasOD=dayTasks.some(t=>isOverdue(t));
+    const dow=new Date(c.date+'T00:00:00').getDay();
+    const chips=dayTasks.slice(0,3).map(t=>`<div class="cell-task-chip ${chipClass(t)}" title="${t.name}">${t.name}</div>`).join('');
+    const more=dayTasks.length>3?`<div class="more-chip">+${dayTasks.length-3} อื่น</div>`:'';
+    return `<div class="cal-cell ${!c.cur?'other-month':''} ${isToday?'is-today':''} ${isSel?'selected':''} ${hasOD?'has-overdue':''} ${dow===0?'sunday':''}"
+      onclick="selectDate('${c.date}')">
+      <div class="cell-num">${+c.date.split('-')[2]}</div>
+      <div class="cell-tasks">${chips}${more}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectDate(dateStr){
+  selDate=dateStr;
+  renderCalendar();
+  renderDayPanel();
+}
+
+function renderDayPanel(){
+  const panel=document.getElementById('day-panel');
+  panel.style.display='block';
+  document.getElementById('dp-title').textContent=fmtThai(selDate);
+  const d=daysUntil(selDate);
+  let sub='';
+  if(selDate===todayStr) sub='วันนี้';
+  else if(d===1) sub='พรุ่งนี้';
+  else if(d===-1) sub='เมื่อวาน';
+  else if(d>0) sub=`อีก ${d} วัน`;
+  else sub=`${Math.abs(d)} วันที่แล้ว`;
+  document.getElementById('dp-sub').textContent=sub;
+
+  const dayTasks=tasks.filter(t=>t.due===selDate);
+  const body=document.getElementById('dp-body');
+  if(!dayTasks.length){
+    body.innerHTML=`<div class="no-tasks"><div class="no-tasks-icon">📭</div>ยังไม่มีงานในวันนี้<br><small style="color:var(--ink3)">กด "+ เพิ่มงานวันนี้" เพื่อเริ่ม</small></div>`;
+    return;
+  }
+  body.innerHTML=dayTasks.map(t=>`
+    <div class="task-row ${t.status==='done'?'row-done':''}">
+      <div class="row-check" onclick="toggleDone(${t.id})">${t.status==='done'?'✓':''}</div>
+      <div class="row-left">
+        <div class="row-name">${t.name}${t.note?` <span style="color:var(--ink3);font-weight:400;font-size:11px">— ${t.note}</span>`:''}
+        </div>
+        <div class="row-tags">
+          <span class="tag ${typeTagClass[t.type]}">${typeNames[t.type]}</span>
+          ${statusTag(t)}
+          ${isOverdue(t)?'<span class="tag tag-overdue">⚠ เกินกำหนด</span>':''}
+        </div>
+      </div>
+      <div class="row-pct-wrap">
+        <div class="mini-track"><div class="mini-fill" style="width:${t.pct}%"></div></div>
+        <span class="pct-num">${t.pct}%</span>
+      </div>
+      <div class="row-actions">
+        <button class="row-btn edit" onclick="openEditModal(${t.id})" title="แก้ไข">✎</button>
+        <button class="row-btn del" onclick="deleteTask(${t.id})" title="ลบ">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function statusTag(t){
+  if(t.status==='done') return '<span class="tag tag-done">✓ เสร็จ</span>';
+  if(t.status==='inprog') return '<span class="tag tag-inprog">⟳ กำลังทำ</span>';
+  return '<span class="tag tag-todo">○ รอทำ</span>';
+}
+
+function toggleDone(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t) return;
+  if(t.status==='done'){ t.status='todo'; t.pct=0; }
+  else { t.status='done'; t.pct=100; }
+  save(); renderAll();
+}
+
+function deleteTask(id){
+  tasks=tasks.filter(x=>x.id!==id);
+  save(); renderAll();
+}
+
+// ─── Navigation ──────────────────────────────────
+function prevMonth(){ curMonth--; if(curMonth<0){curMonth=11;curYear--;} renderCalendar(); renderSidebar(); }
+function nextMonth(){ curMonth++; if(curMonth>11){curMonth=0;curYear++;} renderCalendar(); renderSidebar(); }
+function goToday(){ curYear=today.getFullYear(); curMonth=today.getMonth(); selDate=todayStr; renderAll(); }
+
+// ─── Modal ───────────────────────────────────────
+function openModal(date){
+  editId=null;
+  document.getElementById('modal-title-text').textContent='เพิ่มงานใหม่';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-type').value='daily';
+  document.getElementById('f-status').value='todo';
+  document.getElementById('f-due').value=date||selDate||todayStr;
+  document.getElementById('f-pct').value=0;
+  document.getElementById('f-note').value='';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('f-name').focus(),100);
+}
+function openModalForSelected(){ openModal(selDate); }
+function openEditModal(id){
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  editId=id;
+  document.getElementById('modal-title-text').textContent='แก้ไขงาน';
+  document.getElementById('f-name').value=t.name;
+  document.getElementById('f-type').value=t.type;
+  document.getElementById('f-status').value=t.status;
+  document.getElementById('f-due').value=t.due||'';
+  document.getElementById('f-pct').value=t.pct;
+  document.getElementById('f-note').value=t.note||'';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.add('hidden'); }
+
+function saveTask(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){ document.getElementById('f-name').focus(); return; }
+  const type=document.getElementById('f-type').value;
+  const status=document.getElementById('f-status').value;
+  const due=document.getElementById('f-due').value;
+  const pct=Math.min(100,Math.max(0,parseInt(document.getElementById('f-pct').value)||0));
+  const note=document.getElementById('f-note').value.trim();
+
+  if(editId){
+    const t=tasks.find(x=>x.id===editId);
+    Object.assign(t,{name,type,status,due,pct,note});
+  } else {
+    tasks.unshift({id:nextId++,name,type,due,pct,status,note});
+  }
+  save(); closeModal(); renderAll();
+}
+
+// ─── Clock ───────────────────────────────────────
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock-time').textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clock-date').textContent=fmtThai(todayStr);
+}
+
+// ─── Main ────────────────────────────────────────
+function renderAll(){ renderCalendar(); renderSidebar(); if(selDate) renderDayPanel(); }
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+document.getElementById('modal-overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+updateClock(); setInterval(updateClock,30000);
+selectDate(todayStr);
+renderAll();
+</script>
+
+</body>
+</html>
