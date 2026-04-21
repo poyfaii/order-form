@@ -8,13 +8,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --bg:#0f0f1a;
-  --card:#1b1b2b;
-  --border:#2a2a3d;
-  --text:#fff;
-  --sub:#9aa0c3;
-  --main:#a78bfa;
+:root {
+  --bg: #0b0b12;
+
+  --surface: rgba(255,255,255,0.05);
+  --surface2: rgba(255,255,255,0.08);
+
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.18);
+
+  --text: #f8f7ff;
+  --text2: #b4b0d6;
+  --text3: #6b6790;
+
+  --p1: #8b5cf6; /* ม่วง */
+  --p2: #ec4899; /* ชมพู */
+  --p3: #22c55e; /* เขียว */
+  --p4: #f59e0b; /* เหลือง */
+  --p5: #3b82f6; /* ฟ้า */
+
+  --grad: linear-gradient(135deg, #8b5cf6, #ec4899);
+  --grad2: linear-gradient(135deg, #22c55e, #3b82f6);
+
+  --r: 16px;
+  --r-sm: 10px;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -26,11 +43,9 @@ body{
 
 /* header */
 .topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 18px;
-  border-bottom:1px solid var(--border);
+  backdrop-filter: blur(16px);
+  background: rgba(11,11,18,0.75);
+  border-bottom: 1px solid var(--border);
 }
 
 .title{
@@ -38,13 +53,19 @@ body{
   font-weight:700;
 }
 
-.btn{
-  background:var(--main);
+.btn-add-top{
+  background: var(--grad);
   border:none;
+  border-radius:999px;
+  padding:9px 22px;
+  font-weight:700;
   color:#fff;
-  padding:8px 16px;
-  border-radius:20px;
-  cursor:pointer;
+  box-shadow:0 6px 25px rgba(139,92,246,.45);
+  transition:.2s;
+}
+.btn-add-top:hover{
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 10px 35px rgba(236,72,153,.5);
 }
 
 /* calendar */
