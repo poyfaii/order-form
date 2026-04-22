@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis
 const CATEGORIES = [“อาหาร”, “เงินเดือน”, “เดินทาง”, “ช้อปปิ้ง”, “ลงทุน”, “อื่นๆ”];
 const TYPES = [“รายจ่าย”, “รายรับ”];
 
-const CAT_COLORS = {
+const CAT_COLORS = { 
 “อาหาร”:    “#FF6B6B”,
 “เงินเดือน”:”#4ECDC4”,
 “เดินทาง”:  “#45B7D1”,
