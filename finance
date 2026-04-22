@@ -1,0 +1,313 @@
+import { useState, useMemo } from “react”;
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from “recharts”;
+
+const CATEGORIES = [“อาหาร”, “เงินเดือน”, “เดินทาง”, “ช้อปปิ้ง”, “ลงทุน”, “อื่นๆ”];
+const TYPES = [“รายจ่าย”, “รายรับ”];
+
+const CAT_COLORS = {
+“อาหาร”:    “#FF6B6B”,
+“เงินเดือน”:”#4ECDC4”,
+“เดินทาง”:  “#45B7D1”,
+“ช้อปปิ้ง”: “#FFA07A”,
+“ลงทุน”:    “#98D8C8”,
+“อื่นๆ”:    “#C3B1E1”,
+};
+
+const fmt = (n) => n.toLocaleString(“th-TH”, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const today = () => new Date().toISOString().split(“T”)[0];
+const toMonth = (d) => d.slice(0, 7);
+const monthLabel = (m) => {
+const [y, mo] = m.split(”-”);
+const names = [“ม.ค.”,“ก.พ.”,“มี.ค.”,“เม.ย.”,“พ.ค.”,“มิ.ย.”,“ก.ค.”,“ส.ค.”,“ก.ย.”,“ต.ค.”,“พ.ย.”,“ธ.ค.”];
+return `${names[parseInt(mo,10)-1]} ${parseInt(y,10)+543}`;
+};
+
+const SEED = [
+{ id:1, date:“2025-04-03”, type:“รายจ่าย”, category:“อาหาร”,    amount:320,   description:“ข้าวกะเพรา” },
+{ id:2, date:“2025-04-05”, type:“รายรับ”,  category:“เงินเดือน”,amount:35000, description:“เงินเดือนเดือนเมษา” },
+{ id:3, date:“2025-04-07”, type:“รายจ่าย”, category:“เดินทาง”,  amount:85,    description:“BTS” },
+{ id:4, date:“2025-04-10”, type:“รายจ่าย”, category:“ช้อปปิ้ง”, amount:1490,  description:“เสื้อผ้า” },
+{ id:5, date:“2025-04-15”, type:“รายจ่าย”, category:“อาหาร”,    amount:560,   description:“ร้านอาหารญี่ปุ่น” },
+{ id:6, date:“2025-04-18”, type:“รายรับ”,  category:“ลงทุน”,    amount:2800,  description:“ปันผลกองทุน” },
+{ id:7, date:“2025-04-20”, type:“รายจ่าย”, category:“อื่นๆ”,    amount:800,   description:“ค่าไฟ” },
+];
+
+export default function App() {
+const [expenses, setExpenses] = useState(SEED);
+const [nextId, setNextId] = useState(SEED.length + 1);
+const [form, setForm] = useState({ date: today(), type: “รายจ่าย”, category: “อาหาร”, amount: “”, description: “” });
+const [selectedMonth, setSelectedMonth] = useState(“2025-04”);
+const [sidebarOpen, setSidebarOpen] = useState(false);
+const [flash, setFlash] = useState(false);
+
+const months = useMemo(() => {
+const s = new Set(expenses.map((e) => toMonth(e.date)));
+return […s].sort().reverse();
+}, [expenses]);
+
+const monthly = useMemo(() => expenses.filter((e) => toMonth(e.date) === selectedMonth), [expenses, selectedMonth]);
+
+const income  = monthly.filter(e => e.type === “รายรับ”).reduce((s, e) => s + e.amount, 0);
+const expense = monthly.filter(e => e.type === “รายจ่าย”).reduce((s, e) => s + e.amount, 0);
+const balance = income - expense;
+
+const pieData = useMemo(() => {
+const map = {};
+monthly.filter(e => e.type === “รายจ่าย”).forEach(e => { map[e.category] = (map[e.category]||0) + e.amount; });
+return Object.entries(map).map(([name, value]) => ({ name, value, color: CAT_COLORS[name] || “#aaa” }));
+}, [monthly]);
+
+const barData = useMemo(() => {
+const map = {};
+monthly.forEach(e => {
+if (!map[e.category]) map[e.category] = { cat: e.category, รายรับ: 0, รายจ่าย: 0 };
+map[e.category][e.type] = (map[e.category][e.type]||0) + e.amount;
+});
+return Object.values(map);
+}, [monthly]);
+
+const handleAdd = () => {
+if (!form.amount || Number(form.amount) <= 0) return;
+const item = { …form, amount: Number(form.amount), id: nextId };
+setExpenses(p => [item, …p]);
+setNextId(n => n+1);
+if (!months.includes(toMonth(form.date))) setSelectedMonth(toMonth(form.date));
+setForm({ date: today(), type: “รายจ่าย”, category: “อาหาร”, amount: “”, description: “” });
+setFlash(true); setTimeout(() => setFlash(false), 2000);
+setSidebarOpen(false);
+};
+
+const handleDelete = (id) => setExpenses(p => p.filter(e => e.id !== id));
+
+const inputSt = {
+width:“100%”, background:”#1C1F2E”, border:“1px solid #2E3350”,
+borderRadius:8, padding:“10px 12px”, color:”#E2E8F0”, fontSize:14,
+fontFamily:”‘IBM Plex Sans Thai’, sans-serif”, boxSizing:“border-box”, outline:“none”
+};
+
+return (
+<div style={{ minHeight:“100vh”, background:”#11131F”, fontFamily:”‘IBM Plex Sans Thai’, sans-serif”, color:”#E2E8F0” }}>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>{`* { box-sizing: border-box; } ::-webkit-scrollbar { width:6px; height:6px; } ::-webkit-scrollbar-track { background:#11131F; } ::-webkit-scrollbar-thumb { background:#2E3350; border-radius:3px; } select option { background:#1C1F2E; } input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; } .row-hover:hover { background:rgba(255,255,255,0.03) !important; } .btn-add:hover { filter:brightness(1.12); transform:translateY(-1px); } .btn-add { transition:all 0.18s ease; } .pill-income { background:rgba(78,205,196,0.15); color:#4ECDC4; } .pill-expense { background:rgba(255,107,107,0.15); color:#FF6B6B; } @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } } @keyframes fadeUp  { from { transform:translateY(16px); opacity:0; } to { transform:translateY(0); opacity:1; } } .card-anim { animation:fadeUp 0.35s ease both; }`}</style>
+
+```
+  {/* NAV */}
+  <header style={{ background:"#15172A", borderBottom:"1px solid #22263A", padding:"14px 28px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
+    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+      <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>💹</div>
+      <div>
+        <div style={{ fontSize:16, fontWeight:700, color:"#F1F5F9", letterSpacing:-0.3 }}>Personal Finance Intelligence</div>
+        <div style={{ fontSize:11, color:"#4A5068", fontFamily:"'IBM Plex Mono', monospace" }}>ระบบติดตามการเงินส่วนตัว</div>
+      </div>
+    </div>
+    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      {months.length > 0 && (
+        <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
+          style={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, padding:"8px 12px", color:"#CBD5E1", fontSize:13, fontFamily:"'IBM Plex Sans Thai', sans-serif", cursor:"pointer" }}>
+          {months.map(m => <option key={m} value={m}>{monthLabel(m)}</option>)}
+        </select>
+      )}
+      <button className="btn-add" onClick={() => setSidebarOpen(true)}
+        style={{ background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", color:"#11131F", border:"none", borderRadius:9, padding:"9px 18px", fontFamily:"'IBM Plex Sans Thai', sans-serif", fontWeight:700, fontSize:14, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+        + บันทึกรายการ
+      </button>
+    </div>
+  </header>
+
+  {/* SIDEBAR */}
+  {sidebarOpen && (
+    <div style={{ position:"fixed", inset:0, zIndex:100 }}>
+      <div onClick={() => setSidebarOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.65)", backdropFilter:"blur(5px)" }} />
+      <div style={{ position:"absolute", right:0, top:0, bottom:0, width:340, background:"#15172A", borderLeft:"1px solid #22263A", padding:28, overflowY:"auto", animation:"slideIn 0.25s ease" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+          <h2 style={{ margin:0, fontSize:17, fontWeight:700 }}>📝 บันทึกรายการใหม่</h2>
+          <button onClick={() => setSidebarOpen(false)} style={{ background:"none", border:"none", color:"#4A5068", fontSize:22, cursor:"pointer", lineHeight:1 }}>✕</button>
+        </div>
+
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:11, color:"#4A5068", fontWeight:500, textTransform:"uppercase", letterSpacing:0.6, marginBottom:8 }}>ประเภท</div>
+          <div style={{ display:"flex", gap:8 }}>
+            {TYPES.map(t => (
+              <button key={t} onClick={() => setForm(f => ({...f, type:t}))}
+                style={{ flex:1, padding:"10px 0", borderRadius:9, border:"none", cursor:"pointer", fontFamily:"'IBM Plex Sans Thai', sans-serif", fontWeight:600, fontSize:14,
+                  background: form.type === t ? (t==="รายรับ" ? "#4ECDC4":"#FF6B6B") : "#1C1F2E",
+                  color: form.type === t ? "#11131F":"#64748B", transition:"all 0.15s" }}>
+                {t === "รายรับ" ? "📈 รายรับ":"📉 รายจ่าย"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {[
+          { label:"วันที่",           el:<input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={inputSt} /> },
+          { label:"หมวดหมู่",         el:<select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} style={inputSt}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select> },
+          { label:"จำนวนเงิน (บาท)", el:<input type="number" min="0" placeholder="0.00" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} style={inputSt} /> },
+          { label:"รายละเอียด",       el:<input type="text" placeholder="ระบุรายละเอียด..." value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={inputSt} /> },
+        ].map(({label,el}) => (
+          <div key={label} style={{ marginBottom:16 }}>
+            <div style={{ fontSize:11, color:"#4A5068", fontWeight:500, textTransform:"uppercase", letterSpacing:0.6, marginBottom:6 }}>{label}</div>
+            {el}
+          </div>
+        ))}
+
+        <button className="btn-add" onClick={handleAdd}
+          style={{ width:"100%", marginTop:8, padding:"13px 0", background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", color:"#11131F", border:"none", borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'IBM Plex Sans Thai', sans-serif", cursor:"pointer" }}>
+          เพิ่มรายการ ✓
+        </button>
+        {flash && <div style={{ marginTop:12, textAlign:"center", color:"#4ECDC4", fontSize:14 }}>✅ บันทึกสำเร็จ!</div>}
+      </div>
+    </div>
+  )}
+
+  <main style={{ maxWidth:1200, margin:"0 auto", padding:"28px 20px" }}>
+    {expenses.length === 0 ? (
+      <div style={{ textAlign:"center", padding:"80px 0", color:"#4A5068" }}>
+        <div style={{ fontSize:56, marginBottom:16 }}>📭</div>
+        <div style={{ fontSize:18, fontWeight:600, marginBottom:8, color:"#64748B" }}>ยังไม่มีข้อมูลในระบบ</div>
+        <div style={{ fontSize:14 }}>เริ่มบันทึกรายการแรกของคุณโดยกดปุ่ม "บันทึกรายการ"</div>
+      </div>
+    ) : (
+      <>
+        {/* KPI */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24 }}>
+          <KpiCard label="รายรับ"   value={`฿${fmt(income)}`}           icon="📈" accent="#4ECDC4" sub={`${monthly.filter(e=>e.type==="รายรับ").length} รายการ`}  delay="0ms"   />
+          <KpiCard label="รายจ่าย" value={`฿${fmt(expense)}`}          icon="📉" accent="#FF6B6B" sub={`${monthly.filter(e=>e.type==="รายจ่าย").length} รายการ`} delay="80ms"  />
+          <KpiCard label="คงเหลือ" value={`฿${fmt(Math.abs(balance))}`} icon={balance>=0?"💰":"⚠️"} accent={balance>=0?"#98D8C8":"#FFA07A"} sub={balance>=0?"เงินเหลือ":"รายจ่ายเกินรายรับ"} delay="160ms" />
+        </div>
+
+        {/* PROGRESS */}
+        {income > 0 && (
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"18px 22px", marginBottom:24 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10, fontSize:13, color:"#64748B" }}>
+              <span>สัดส่วนรายรับ vs รายจ่าย</span>
+              <span style={{ fontFamily:"'IBM Plex Mono', monospace", color: balance>=0?"#4ECDC4":"#FF6B6B" }}>
+                {balance>=0?"+":"-"}฿{fmt(Math.abs(balance))}
+              </span>
+            </div>
+            <div style={{ background:"#1C1F2E", borderRadius:99, height:12, overflow:"hidden", display:"flex" }}>
+              <div style={{ width:`${Math.min((expense/income)*100,100)}%`, background:"linear-gradient(90deg,#FF6B6B,#FFA07A)", transition:"width 0.5s ease" }} />
+              <div style={{ flex:1, background:"rgba(78,205,196,0.2)" }} />
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, fontSize:11, color:"#4A5068" }}>
+              <span>รายจ่าย {((expense/income)*100).toFixed(1)}%</span>
+              <span>รายรับ 100%</span>
+            </div>
+          </div>
+        )}
+
+        {/* CHARTS */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"20px 18px" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>สัดส่วนรายจ่าย</h3>
+            {pieData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={75} innerRadius={42} stroke="none" paddingAngle={2}>
+                      {pieData.map((d,i) => <Cell key={i} fill={d.color} />)}
+                    </Pie>
+                    <Tooltip formatter={v=>[`฿${fmt(v)}`,""]} contentStyle={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, fontSize:12, fontFamily:"'IBM Plex Sans Thai', sans-serif" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"6px 14px", marginTop:4 }}>
+                  {pieData.map(d => (
+                    <div key={d.name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#94A3B8" }}>
+                      <span style={{ width:8, height:8, borderRadius:2, background:d.color, display:"inline-block" }} />
+                      {d.name}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : <div style={{ height:180, display:"flex", alignItems:"center", justifyContent:"center", color:"#4A5068", fontSize:14 }}>ไม่มีข้อมูลรายจ่าย</div>}
+          </div>
+
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"20px 18px" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>รายรับ-รายจ่าย ตามหมวดหมู่</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} margin={{ top:4, right:4, bottom:0, left:-10 }}>
+                <XAxis dataKey="cat" tick={{ fill:"#64748B", fontSize:11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill:"#4A5068", fontSize:10 }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={v=>[`฿${fmt(v)}`,""]} contentStyle={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, fontSize:12, fontFamily:"'IBM Plex Sans Thai', sans-serif" }} />
+                <Legend wrapperStyle={{ fontSize:12, color:"#64748B" }} />
+                <Bar dataKey="รายรับ"   fill="#4ECDC4" radius={[4,4,0,0]} maxBarSize={28} />
+                <Bar dataKey="รายจ่าย" fill="#FF6B6B" radius={[4,4,0,0]} maxBarSize={28} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, overflow:"hidden" }}>
+          <div style={{ padding:"16px 22px", borderBottom:"1px solid #22263A", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>รายการล่าสุด — {monthLabel(selectedMonth)}</h3>
+            <span style={{ fontSize:11, color:"#4A5068", fontFamily:"'IBM Plex Mono', monospace" }}>{monthly.length} รายการ</span>
+          </div>
+          {monthly.length === 0 ? (
+            <div style={{ padding:"40px 0", textAlign:"center", color:"#4A5068", fontSize:14 }}>ไม่มีรายการในเดือนนี้</div>
+          ) : (
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                <thead>
+                  <tr style={{ background:"#12142080" }}>
+                    {["วันที่","ประเภท","หมวดหมู่","รายละเอียด","จำนวนเงิน",""].map(h => (
+                      <th key={h} style={{ padding:"10px 16px", textAlign:h==="จำนวนเงิน"?"right":"left", color:"#4A5068", fontWeight:500, fontSize:11, textTransform:"uppercase", letterSpacing:0.5, whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...monthly].sort((a,b)=>b.date.localeCompare(a.date)).map((e,i) => (
+                    <tr key={e.id} className="row-hover" style={{ borderTop:"1px solid #1C1F2E" }}>
+                      <td style={{ padding:"11px 16px", color:"#64748B", fontFamily:"'IBM Plex Mono', monospace", fontSize:12, whiteSpace:"nowrap" }}>{e.date}</td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <span className={e.type==="รายรับ"?"pill-income":"pill-expense"} style={{ padding:"3px 10px", borderRadius:99, fontSize:11, fontWeight:600 }}>
+                          {e.type==="รายรับ"?"📈":"📉"} {e.type}
+                        </span>
+                      </td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <span style={{ display:"inline-flex", alignItems:"center", gap:6, background:`${CAT_COLORS[e.category]||"#aaa"}22`, color:CAT_COLORS[e.category]||"#aaa", padding:"3px 10px", borderRadius:99, fontSize:11, fontWeight:600 }}>
+                          {e.category}
+                        </span>
+                      </td>
+                      <td style={{ padding:"11px 16px", color:"#CBD5E1" }}>{e.description || <span style={{ color:"#2E3350" }}>—</span>}</td>
+                      <td style={{ padding:"11px 16px", textAlign:"right", fontFamily:"'IBM Plex Mono', monospace", fontWeight:700, color:e.type==="รายรับ"?"#4ECDC4":"#FF6B6B", whiteSpace:"nowrap" }}>
+                        {e.type==="รายรับ"?"+":"-"}฿{fmt(e.amount)}
+                      </td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <button onClick={()=>handleDelete(e.id)} style={{ background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.2)", color:"#FF6B6B", borderRadius:6, padding:"4px 10px", fontSize:11, cursor:"pointer", fontFamily:"'IBM Plex Sans Thai', sans-serif" }}>ลบ</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop:"2px solid #22263A", background:"#12142080" }}>
+                    <td colSpan={4} style={{ padding:"12px 16px", color:"#64748B", fontSize:12, fontWeight:600 }}>คงเหลือสุทธิ</td>
+                    <td style={{ padding:"12px 16px", textAlign:"right", fontFamily:"'IBM Plex Mono', monospace", fontWeight:700, fontSize:15, color:balance>=0?"#4ECDC4":"#FF6B6B" }}>
+                      {balance>=0?"+":"-"}฿{fmt(Math.abs(balance))}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      </>
+    )}
+  </main>
+</div>
+```
+
+);
+}
+
+function KpiCard({ label, value, icon, accent, sub, delay }) {
+return (
+<div className=“card-anim” style={{ background:”#15172A”, border:`1px solid ${accent}28`, borderRadius:14, padding:“20px 22px”, position:“relative”, overflow:“hidden”, animationDelay:delay }}>
+<div style={{ position:“absolute”, right:18, top:18, fontSize:30, opacity:0.12 }}>{icon}</div>
+<div style={{ fontSize:11, color:”#4A5068”, marginBottom:8, textTransform:“uppercase”, letterSpacing:0.6 }}>{label}</div>
+<div style={{ fontSize:24, fontWeight:700, color:”#F1F5F9”, fontFamily:”‘IBM Plex Mono’, monospace”, marginBottom:5, letterSpacing:-0.5 }}>{value}</div>
+<div style={{ fontSize:12, color:accent, fontWeight:500 }}>{sub}</div>
+<div style={{ position:“absolute”, bottom:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${accent}88,transparent)` }} />
+</div>
+);
+}
