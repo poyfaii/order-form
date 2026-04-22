@@ -1,477 +1,313 @@
-<!DOCTYPE html>
+import { useState, useMemo } from “react”;
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from “recharts”;
 
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work Calendar</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:       #0d0d14;
-  --surface:  rgba(255,255,255,0.04);
-  --surface2: rgba(255,255,255,0.07);
-  --border:   rgba(255,255,255,0.09);
-  --border2:  rgba(255,255,255,0.16);
-  --text:     #f0eeff;
-  --text2:    #9490b8;
-  --text3:    #4e4a6a;
-  --p1: #a78bfa;
-  --p2: #f472b6;
-  --p3: #34d399;
-  --p4: #fbbf24;
-  --p5: #60a5fa;
-  --grad:  linear-gradient(135deg,#a78bfa,#f472b6);
-  --grad2: linear-gradient(135deg,#34d399,#60a5fa);
-  --r:    16px;
-  --r-sm: 10px;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{font-size:14px;}
-body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min-height:100vh;overflow-x:hidden;}
+const CATEGORIES = [“อาหาร”, “เงินเดือน”, “เดินทาง”, “ช้อปปิ้ง”, “ลงทุน”, “อื่นๆ”];
+const TYPES = [“รายจ่าย”, “รายรับ”];
 
-body::before,body::after{content:’’;position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(130px);opacity:.16;}
-body::before{width:700px;height:700px;background:radial-gradient(circle,#a78bfa,transparent 70%);top:-250px;left:-200px;}
-body::after{width:600px;height:600px;background:radial-gradient(circle,#f472b6,transparent 70%);bottom:-200px;right:-150px;}
+const CAT_COLORS = { 
+“อาหาร”:    “#FF6B6B”,
+“เงินเดือน”:”#4ECDC4”, 
+“เดินทาง”:  “#45B7D1”,
+“ช้อปปิ้ง”: “#FFA07A”,
+“ลงทุน”:    “#98D8C8”,
+“อื่นๆ”:    “#C3B1E1”,
+};
 
-.shell{position:relative;z-index:1;display:grid;grid-template-columns:300px 1fr;grid-template-rows:60px 1fr;min-height:100vh;}
-@media(max-width:860px){.shell{grid-template-columns:1fr;}}
+const fmt = (n) => n.toLocaleString(“th-TH”, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const today = () => new Date().toISOString().split(“T”)[0];
+const toMonth = (d) => d.slice(0, 7);
+const monthLabel = (m) => {
+const [y, mo] = m.split(”-”);
+const names = [“ม.ค.”,“ก.พ.”,“มี.ค.”,“เม.ย.”,“พ.ค.”,“มิ.ย.”,“ก.ค.”,“ส.ค.”,“ก.ย.”,“ต.ค.”,“พ.ย.”,“ธ.ค.”];
+return `${names[parseInt(mo,10)-1]} ${parseInt(y,10)+543}`;
+};
 
-/* Topbar */
-.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(13,13,20,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(–border);position:sticky;top:0;z-index:200;}
-.brand{display:flex;align-items:center;gap:10px;}
-.brand-icon{width:34px;height:34px;border-radius:10px;background:var(–grad);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 20px rgba(167,139,250,.4);}
-.brand-name{font-family:‘Plus Jakarta Sans’,sans-serif;font-weight:800;font-size:15px;letter-spacing:-.3px;}
-.brand-name span{background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.clock-pill{background:var(–surface2);border:1px solid var(–border);border-radius:99px;padding:5px 14px;font-size:12px;color:var(–text2);display:flex;align-items:center;gap:8px;}
-.clock-pill #clock-time{color:var(–p1);font-weight:700;font-size:13px;}
-.btn-add-top{background:var(–grad);border:none;border-radius:99px;padding:8px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;box-shadow:0 4px 20px rgba(167,139,250,.35);transition:transform .15s,box-shadow .15s;display:flex;align-items:center;gap:6px;}
-.btn-add-top:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(167,139,250,.5);}
-.btn-add-top:active{transform:scale(.97);}
+const SEED = [
+{ id:1, date:“2025-04-03”, type:“รายจ่าย”, category:“อาหาร”,    amount:320,   description:“ข้าวกะเพรา” },
+{ id:2, date:“2025-04-05”, type:“รายรับ”,  category:“เงินเดือน”,amount:35000, description:“เงินเดือนเดือนเมษา” },
+{ id:3, date:“2025-04-07”, type:“รายจ่าย”, category:“เดินทาง”,  amount:85,    description:“BTS” },
+{ id:4, date:“2025-04-10”, type:“รายจ่าย”, category:“ช้อปปิ้ง”, amount:1490,  description:“เสื้อผ้า” },
+{ id:5, date:“2025-04-15”, type:“รายจ่าย”, category:“อาหาร”,    amount:560,   description:“ร้านอาหารญี่ปุ่น” },
+{ id:6, date:“2025-04-18”, type:“รายรับ”,  category:“ลงทุน”,    amount:2800,  description:“ปันผลกองทุน” },
+{ id:7, date:“2025-04-20”, type:“รายจ่าย”, category:“อื่นๆ”,    amount:800,   description:“ค่าไฟ” },
+];
 
-/* Sidebar */
-.sidebar{border-right:1px solid var(–border);padding:20px 0;overflow-y:auto;background:rgba(13,13,20,.5);backdrop-filter:blur(10px);}
+export default function App() {
+const [expenses, setExpenses] = useState(SEED);
+const [nextId, setNextId] = useState(SEED.length + 1);
+const [form, setForm] = useState({ date: today(), type: “รายจ่าย”, category: “อาหาร”, amount: “”, description: “” });
+const [selectedMonth, setSelectedMonth] = useState(“2025-04”);
+const [sidebarOpen, setSidebarOpen] = useState(false);
+const [flash, setFlash] = useState(false);
 
-/* Stats */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 16px;}
-.stat-card{border-radius:var(–r-sm);padding:14px;border:1px solid var(–border);background:var(–surface);position:relative;overflow:hidden;transition:border-color .2s,transform .2s;}
-.stat-card:hover{border-color:var(–border2);transform:translateY(-1px);}
-.stat-card::before{content:’’;position:absolute;inset:0;opacity:.07;border-radius:inherit;}
-.sc1::before{background:var(–p5)}.sc2::before{background:var(–p3)}.sc3::before{background:var(–p4)}.sc4::before{background:var(–p2)}
-.stat-n{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:28px;font-weight:800;line-height:1;}
-.sc1 .stat-n{color:var(–p5)}.sc2 .stat-n{color:var(–p3)}.sc3 .stat-n{color:var(–p4)}.sc4 .stat-n{color:var(–p2)}
-.stat-l{font-size:11px;color:var(–text2);margin-top:4px;}
+const months = useMemo(() => {
+const s = new Set(expenses.map((e) => toMonth(e.date)));
+return […s].sort().reverse();
+}, [expenses]);
 
-/* Progress */
-.prog-section{padding:0 16px 16px;border-bottom:1px solid var(–border);}
-.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.prog-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(–text3);}
-.prog-pct{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:13px;font-weight:800;background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.prog-track{height:5px;background:var(–surface2);border-radius:99px;overflow:hidden;}
-.prog-fill{height:100%;border-radius:99px;background:var(–grad);transition:width .6s cubic-bezier(.4,0,.2,1);}
+const monthly = useMemo(() => expenses.filter((e) => toMonth(e.date) === selectedMonth), [expenses, selectedMonth]);
 
-/* Alerts */
-.alert-area{padding:0 16px 4px;}
-.alert-chip{display:flex;gap:8px;align-items:flex-start;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:var(–r-sm);padding:9px 12px;margin-bottom:6px;font-size:12px;color:var(–p2);animation:chipIn .25s ease;}
-.alert-chip.warn{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2);color:var(–p4);}
-@keyframes chipIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+const income  = monthly.filter(e => e.type === “รายรับ”).reduce((s, e) => s + e.amount, 0);
+const expense = monthly.filter(e => e.type === “รายจ่าย”).reduce((s, e) => s + e.amount, 0);
+const balance = income - expense;
 
-/* Sidebar sections */
-.sb-section{padding:14px 16px;}
-.sb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(–text3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.sb-label::after{content:’’;flex:1;height:1px;background:var(–border);}
-.tt-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(–r-sm);margin-bottom:4px;cursor:pointer;border:1px solid transparent;transition:all .15s;}
-.tt-item:hover{background:var(–surface2);border-color:var(–border);}
-.tt-pip{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.tt-body{flex:1;min-width:0;}
-.tt-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tt-name.done-text{text-decoration:line-through;color:var(–text3);}
-.tt-meta{font-size:10px;color:var(–text3);margin-top:1px;}
+const pieData = useMemo(() => {
+const map = {};
+monthly.filter(e => e.type === “รายจ่าย”).forEach(e => { map[e.category] = (map[e.category]||0) + e.amount; });
+return Object.entries(map).map(([name, value]) => ({ name, value, color: CAT_COLORS[name] || “#aaa” }));
+}, [monthly]);
 
-/* Main */
-.main{padding:20px;overflow-y:auto;}
-.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.cal-title{flex:1;font-family:‘Plus Jakarta Sans’,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;}
-.cal-title span{background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.btn-nav{width:32px;height:32px;border-radius:8px;background:var(–surface2);border:1px solid var(–border);color:var(–text2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.btn-nav:hover{background:var(–grad);border-color:transparent;color:#fff;}
-.btn-today{background:var(–surface2);border:1px solid var(–border);color:var(–text2);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:‘Sarabun’,sans-serif;transition:all .15s;}
-.btn-today:hover{border-color:var(–p1);color:var(–p1);}
+const barData = useMemo(() => {
+const map = {};
+monthly.forEach(e => {
+if (!map[e.category]) map[e.category] = { cat: e.category, รายรับ: 0, รายจ่าย: 0 };
+map[e.category][e.type] = (map[e.category][e.type]||0) + e.amount;
+});
+return Object.values(map);
+}, [monthly]);
 
-/* Calendar */
-.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;}
-.cal-wd{text-align:center;font-size:11px;font-weight:700;color:var(–text3);text-transform:uppercase;padding:5px 0;letter-spacing:.5px;}
-.cal-wd:first-child{color:var(–p2);}
-.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-.cal-cell{background:var(–surface);border:1px solid var(–border);border-radius:var(–r-sm);min-height:88px;padding:7px;cursor:pointer;transition:all .18s;overflow:hidden;}
-.cal-cell:hover{border-color:var(–p1);background:var(–surface2);transform:translateY(-1px);}
-.cal-cell.other-month{opacity:.25;pointer-events:none;}
-.cal-cell.is-today{border-color:var(–p1);background:rgba(167,139,250,.08);box-shadow:0 0 0 1px rgba(167,139,250,.25);}
-.cal-cell.selected{border-color:var(–p2);background:rgba(244,114,182,.07);box-shadow:0 0 0 1px rgba(244,114,182,.25);}
-.cal-cell.has-overdue{border-color:rgba(244,114,182,.35);}
-.cal-cell.sunday .cell-num{color:var(–p2);}
-.cell-num{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:13px;font-weight:700;color:var(–text2);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
-.is-today .cell-num{background:var(–grad);color:#fff;box-shadow:0 2px 10px rgba(167,139,250,.5);font-size:12px;}
-.cell-chips{display:flex;flex-direction:column;gap:2px;}
-.c-chip{font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c-done{background:rgba(52,211,153,.15);color:var(–p3);}
-.c-inprog{background:rgba(167,139,250,.15);color:var(–p1);}
-.c-todo{background:var(–surface2);color:var(–text3);}
-.c-overdue{background:rgba(244,114,182,.15);color:var(–p2);}
-.c-more{font-size:10px;color:var(–text3);padding-left:4px;}
+const handleAdd = () => {
+if (!form.amount || Number(form.amount) <= 0) return;
+const item = { …form, amount: Number(form.amount), id: nextId };
+setExpenses(p => [item, …p]);
+setNextId(n => n+1);
+if (!months.includes(toMonth(form.date))) setSelectedMonth(toMonth(form.date));
+setForm({ date: today(), type: “รายจ่าย”, category: “อาหาร”, amount: “”, description: “” });
+setFlash(true); setTimeout(() => setFlash(false), 2000);
+setSidebarOpen(false);
+};
 
-/* Day panel */
-.day-panel{margin-top:16px;background:var(–surface);border:1px solid var(–border);border-radius:var(–r);overflow:hidden;backdrop-filter:blur(10px);}
-.dp-header{padding:16px 20px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(244,114,182,.08));border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.dp-title{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:16px;font-weight:800;}
-.dp-sub{font-size:12px;color:var(–text2);margin-top:2px;}
-.btn-add-day{background:var(–grad);border:none;border-radius:99px;padding:8px 18px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;white-space:nowrap;box-shadow:0 4px 14px rgba(167,139,250,.3);transition:transform .15s,box-shadow .15s;}
-.btn-add-day:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(167,139,250,.45);}
-.dp-body{padding:14px 20px;}
+const handleDelete = (id) => setExpenses(p => p.filter(e => e.id !== id));
 
-/* Task row */
-.task-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(–r-sm);margin-bottom:7px;border:1px solid var(–border);background:var(–surface);transition:all .18s;animation:rowIn .2s ease both;}
-@keyframes rowIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.task-row:hover{border-color:var(–border2);background:var(–surface2);}
-.task-row.row-done{opacity:.5;}
-.row-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(–border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;}
-.row-check:hover{border-color:var(–p3);}
-.task-row.row-done .row-check{background:var(–p3);border-color:var(–p3);color:#0d0d14;font-weight:900;}
-.row-left{flex:1;min-width:0;}
-.row-name{font-size:13px;font-weight:600;}
-.task-row.row-done .row-name{text-decoration:line-through;color:var(–text3);}
-.row-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
-.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.3px;}
-.tag-daily{background:rgba(52,211,153,.12);color:var(–p3);}
-.tag-weekly{background:rgba(96,165,250,.12);color:var(–p5);}
-.tag-monthly{background:rgba(251,191,36,.12);color:var(–p4);}
-.tag-special{background:rgba(167,139,250,.12);color:var(–p1);}
-.tag-done{background:rgba(52,211,153,.12);color:var(–p3);}
-.tag-inprog{background:rgba(167,139,250,.12);color:var(–p1);}
-.tag-todo{background:var(–surface2);color:var(–text3);border:1px solid var(–border);}
-.tag-overdue{background:rgba(244,114,182,.12);color:var(–p2);}
-.row-prog{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.mini-track{width:56px;height:4px;background:var(–surface2);border-radius:99px;overflow:hidden;}
-.mini-fill{height:100%;border-radius:99px;background:var(–grad);transition:width .4s;}
-.pct-num{font-size:11px;color:var(–text2);min-width:28px;font-weight:600;}
-.row-actions{display:flex;gap:5px;flex-shrink:0;}
-.row-btn{width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;border:1px solid var(–border);transition:all .15s;}
-.row-btn.edit{background:var(–surface2);color:var(–text2);}
-.row-btn.edit:hover{background:rgba(96,165,250,.15);border-color:var(–p5);color:var(–p5);}
-.row-btn.del{background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.25);color:var(–p2);}
-.row-btn.del:hover{background:var(–p2);border-color:var(–p2);color:#0d0d14;}
-.no-tasks{text-align:center;padding:28px;color:var(–text3);font-size:13px;}
-.no-tasks-icon{font-size:36px;margin-bottom:8px;opacity:.5;}
+const inputSt = {
+width:“100%”, background:”#1C1F2E”, border:“1px solid #2E3350”,
+borderRadius:8, padding:“10px 12px”, color:”#E2E8F0”, fontSize:14,
+fontFamily:”‘IBM Plex Sans Thai’, sans-serif”, boxSizing:“border-box”, outline:“none”
+};
 
-/* Modal */
-.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease;}
-.modal-overlay.hidden{display:none;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal{background:#13121e;border:1px solid var(–border2);border-radius:20px;padding:26px;width:430px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(167,139,250,.1);animation:modalUp .22s cubic-bezier(.34,1.5,.64,1);}
-@keyframes modalUp{from{opacity:0;transform:translateY(20px)scale(.96)}to{opacity:1;transform:none}}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.modal-title{font-family:‘Plus Jakarta Sans’,sans-serif;font-size:18px;font-weight:800;background:var(–grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.modal-x{width:30px;height:30px;border-radius:8px;background:var(–surface2);border:1px solid var(–border);color:var(–text2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.modal-x:hover{background:rgba(244,114,182,.15);border-color:var(–p2);color:var(–p2);}
-.f-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(–text3);margin-bottom:6px;}
-.f-input,.f-select{width:100%;background:var(–surface2);border:1px solid var(–border);color:var(–text);border-radius:10px;padding:10px 13px;font-size:13px;font-family:‘Sarabun’,sans-serif;outline:none;transition:border .15s;}
-.f-input:focus,.f-select:focus{border-color:var(–p1);box-shadow:0 0 0 3px rgba(167,139,250,.12);}
-.f-select option{background:#13121e;}
-.f-field{margin-bottom:14px;}
-.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
-.btn-cancel{background:var(–surface2);border:1px solid var(–border);color:var(–text2);border-radius:99px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:‘Sarabun’,sans-serif;transition:all .15s;}
-.btn-cancel:hover{background:var(–surface);border-color:var(–border2);}
-.btn-save{background:var(–grad);border:none;border-radius:99px;padding:10px 26px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:‘Sarabun’,sans-serif;box-shadow:0 4px 16px rgba(167,139,250,.35);transition:transform .15s,box-shadow .15s;}
-.btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(167,139,250,.5);}
+return (
+<div style={{ minHeight:“100vh”, background:”#11131F”, fontFamily:”‘IBM Plex Sans Thai’, sans-serif”, color:”#E2E8F0” }}>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>{`* { box-sizing: border-box; } ::-webkit-scrollbar { width:6px; height:6px; } ::-webkit-scrollbar-track { background:#11131F; } ::-webkit-scrollbar-thumb { background:#2E3350; border-radius:3px; } select option { background:#1C1F2E; } input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; } .row-hover:hover { background:rgba(255,255,255,0.03) !important; } .btn-add:hover { filter:brightness(1.12); transform:translateY(-1px); } .btn-add { transition:all 0.18s ease; } .pill-income { background:rgba(78,205,196,0.15); color:#4ECDC4; } .pill-expense { background:rgba(255,107,107,0.15); color:#FF6B6B; } @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } } @keyframes fadeUp  { from { transform:translateY(16px); opacity:0; } to { transform:translateY(0); opacity:1; } } .card-anim { animation:fadeUp 0.35s ease both; }`}</style>
 
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(–border2);border-radius:99px;}
-</style>
-
-</head>
-<body>
-<div class="shell">
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-icon">🗓</div>
-      <div><div class="brand-name">Work<span>Cal</span></div></div>
-    </div>
-    <div class="topbar-right">
-      <div class="clock-pill">
-        <span id="clock-time">--:--</span>
-        <span style="color:var(--text3)">|</span>
-        <span id="clock-date" style="font-size:11px;color:var(--text2)">--</span>
-      </div>
-      <button class="btn-add-top" onclick="openModal()">＋ เพิ่มงาน</button>
-    </div>
-  </div>
-
-  <div class="sidebar">
-    <div style="padding:0 16px 14px">
-      <div class="stats-grid">
-        <div class="stat-card sc1"><div class="stat-n" id="st-total">0</div><div class="stat-l">ทั้งหมด</div></div>
-        <div class="stat-card sc2"><div class="stat-n" id="st-done">0</div><div class="stat-l">เสร็จแล้ว</div></div>
-        <div class="stat-card sc3"><div class="stat-n" id="st-inprog">0</div><div class="stat-l">กำลังทำ</div></div>
-        <div class="stat-card sc4"><div class="stat-n" id="st-overdue">0</div><div class="stat-l">เกินกำหนด</div></div>
+```
+  {/* NAV */}
+  <header style={{ background:"#15172A", borderBottom:"1px solid #22263A", padding:"14px 28px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
+    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+      <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>💹</div>
+      <div>
+        <div style={{ fontSize:16, fontWeight:700, color:"#F1F5F9", letterSpacing:-0.3 }}>Personal Finance Intelligence</div>
+        <div style={{ fontSize:11, color:"#4A5068", fontFamily:"'IBM Plex Mono', monospace" }}>ระบบติดตามการเงินส่วนตัว</div>
       </div>
     </div>
-    <div class="prog-section">
-      <div class="prog-header">
-        <span class="prog-label">ภาพรวมเดือนนี้</span>
-        <span class="prog-pct" id="prog-pct">0%</span>
-      </div>
-      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-    </div>
-    <div class="alert-area" id="alert-area"></div>
-    <div class="sb-section">
-      <div class="sb-label">วันนี้</div>
-      <div id="today-list"><div style="font-size:12px;color:var(--text3);padding:4px 0">ยังไม่มีงานวันนี้</div></div>
-    </div>
-    <div class="sb-section">
-      <div class="sb-label">ใกล้ครบกำหนด</div>
-      <div id="upcoming-list"><div style="font-size:12px;color:var(--text3);padding:4px 0">ไม่มีงานในช่วงนี้</div></div>
-    </div>
-  </div>
-
-  <div class="main">
-    <div class="cal-nav">
-      <div class="cal-title" id="cal-title">เดือน <span>—</span></div>
-      <button class="btn-today" onclick="goToday()">วันนี้</button>
-      <button class="btn-nav" onclick="prevMonth()">‹</button>
-      <button class="btn-nav" onclick="nextMonth()">›</button>
-    </div>
-    <div class="cal-weekdays">
-      <div class="cal-wd">อา</div><div class="cal-wd">จ</div><div class="cal-wd">อ</div>
-      <div class="cal-wd">พ</div><div class="cal-wd">พฤ</div><div class="cal-wd">ศ</div><div class="cal-wd">ส</div>
-    </div>
-    <div class="cal-days" id="cal-days"></div>
-    <div class="day-panel" id="day-panel" style="display:none">
-      <div class="dp-header">
-        <div>
-          <div class="dp-title" id="dp-title">—</div>
-          <div class="dp-sub" id="dp-sub">—</div>
-        </div>
-        <button class="btn-add-day" onclick="openModalForSelected()">＋ เพิ่มงาน</button>
-      </div>
-      <div class="dp-body" id="dp-body"></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay hidden" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title" id="modal-title-text">เพิ่มงานใหม่</div>
-      <button class="modal-x" onclick="closeModal()">✕</button>
-    </div>
-    <div class="f-field">
-      <label class="f-label">ชื่องาน</label>
-      <input class="f-input" id="f-name" type="text" placeholder="เช่น ส่งรายงาน, ประชุมทีม..." />
-    </div>
-    <div class="f-row">
-      <div class="f-field">
-        <label class="f-label">ประเภท</label>
-        <select class="f-select" id="f-type">
-          <option value="daily">📗 รายวัน</option>
-          <option value="weekly">📘 รายสัปดาห์</option>
-          <option value="monthly">📙 รายเดือน</option>
-          <option value="special">🔖 พิเศษ</option>
+    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      {months.length > 0 && (
+        <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
+          style={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, padding:"8px 12px", color:"#CBD5E1", fontSize:13, fontFamily:"'IBM Plex Sans Thai', sans-serif", cursor:"pointer" }}>
+          {months.map(m => <option key={m} value={m}>{monthLabel(m)}</option>)}
         </select>
-      </div>
-      <div class="f-field">
-        <label class="f-label">สถานะ</label>
-        <select class="f-select" id="f-status">
-          <option value="todo">รอทำ</option>
-          <option value="inprog">กำลังทำ</option>
-          <option value="done">เสร็จแล้ว</option>
-        </select>
-      </div>
+      )}
+      <button className="btn-add" onClick={() => setSidebarOpen(true)}
+        style={{ background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", color:"#11131F", border:"none", borderRadius:9, padding:"9px 18px", fontFamily:"'IBM Plex Sans Thai', sans-serif", fontWeight:700, fontSize:14, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+        + บันทึกรายการ
+      </button>
     </div>
-    <div class="f-row">
-      <div class="f-field">
-        <label class="f-label">วันกำหนดส่ง</label>
-        <input class="f-input" id="f-due" type="date" />
-      </div>
-      <div class="f-field">
-        <label class="f-label">% คืบหน้า</label>
-        <input class="f-input" id="f-pct" type="number" min="0" max="100" value="0" />
-      </div>
-    </div>
-    <div class="f-field">
-      <label class="f-label">หมายเหตุ</label>
-      <input class="f-input" id="f-note" type="text" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
-      <button class="btn-save" onclick="saveTask()">บันทึก ✦</button>
-    </div>
-  </div>
-</div>
+  </header>
 
-<script>
-const today=new Date(),todayStr=fmt(today);
-function fmt(d){return d.toISOString().split('T')[0];}
-function fmtThai(s){
-  if(!s)return'';
-  const[y,m,dd]=s.split('-');
-  const mo=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const dys=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-  const o=new Date(s+'T00:00:00');
-  return`${dys[o.getDay()]}ที่ ${+dd} ${mo[+m]} ${+y+543}`;
-}
-function daysUntil(s){return Math.round((new Date(s+'T00:00:00')-new Date(todayStr+'T00:00:00'))/86400000);}
-
-let tasks=JSON.parse(localStorage.getItem('wc_v3')||'null')||[];
-let nextId=tasks.length?Math.max(...tasks.map(t=>t.id))+1:1;
-let curYear=today.getFullYear(),curMonth=today.getMonth(),selDate=todayStr,editId=null;
-
-function save(){localStorage.setItem('wc_v3',JSON.stringify(tasks));}
-function isOverdue(t){return t.due&&t.status!=='done'&&t.due<todayStr;}
-
-const typeColors={daily:'#34d399',weekly:'#60a5fa',monthly:'#fbbf24',special:'#a78bfa'};
-const typeNames={daily:'รายวัน',weekly:'รายสัปดาห์',monthly:'รายเดือน',special:'พิเศษ'};
-const typeTagCls={daily:'tag-daily',weekly:'tag-weekly',monthly:'tag-monthly',special:'tag-special'};
-function chipCls(t){if(isOverdue(t))return'c-overdue';if(t.status==='done')return'c-done';if(t.status==='inprog')return'c-inprog';return'c-todo';}
-
-function renderSidebar(){
-  document.getElementById('st-total').textContent=tasks.length;
-  document.getElementById('st-done').textContent=tasks.filter(t=>t.status==='done').length;
-  document.getElementById('st-inprog').textContent=tasks.filter(t=>t.status==='inprog').length;
-  document.getElementById('st-overdue').textContent=tasks.filter(t=>isOverdue(t)).length;
-  const cm=`${curYear}-${String(curMonth+1).padStart(2,'0')}`;
-  const mt=tasks.filter(t=>t.due&&t.due.startsWith(cm));
-  const pct=mt.length?Math.round(mt.reduce((a,t)=>a+t.pct,0)/mt.length):0;
-  document.getElementById('prog-pct').textContent=pct+'%';
-  document.getElementById('prog-fill').style.width=pct+'%';
-  let ah='';
-  tasks.filter(t=>isOverdue(t)).slice(0,2).forEach(t=>{ah+=`<div class="alert-chip">⚠ <span><b>${t.name}</b><br><span style="opacity:.7;font-size:10px">${fmtThai(t.due)}</span></span></div>`;});
-  tasks.filter(t=>!isOverdue(t)&&t.due&&daysUntil(t.due)<=3&&t.status!=='done').slice(0,2).forEach(t=>{const d=daysUntil(t.due);ah+=`<div class="alert-chip warn">⏰ <span><b>${t.name}</b><br><span style="opacity:.7;font-size:10px">${d===0?'ครบกำหนดวันนี้!':'อีก '+d+' วัน'}</span></span></div>`;});
-  document.getElementById('alert-area').innerHTML=ah?`<div style="padding:12px 16px 4px">${ah}</div>`:'';
-  const tt=tasks.filter(t=>t.due===todayStr);
-  document.getElementById('today-list').innerHTML=tt.length?tt.map(t=>`<div class="tt-item" onclick="selectDate('${t.due}')"><div class="tt-pip" style="background:${typeColors[t.type]}"></div><div class="tt-body"><div class="tt-name ${t.status==='done'?'done-text':''}">${t.name}</div><div class="tt-meta">${typeNames[t.type]} · ${t.pct}%</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0">ยังไม่มีงานวันนี้</div>';
-  const up=tasks.filter(t=>t.due&&t.due!==todayStr&&daysUntil(t.due)>0&&daysUntil(t.due)<=7&&t.status!=='done').sort((a,b)=>a.due.localeCompare(b.due));
-  document.getElementById('upcoming-list').innerHTML=up.length?up.map(t=>`<div class="tt-item" onclick="selectDate('${t.due}')"><div class="tt-pip" style="background:${typeColors[t.type]}"></div><div class="tt-body"><div class="tt-name">${t.name}</div><div class="tt-meta">${fmtThai(t.due)} · อีก ${daysUntil(t.due)} วัน</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0">ไม่มีงานในช่วงนี้</div>';
-}
-
-const thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-
-function renderCalendar(){
-  const y=curYear,m=curMonth;
-  document.getElementById('cal-title').innerHTML=`${thaiMonths[m]} <span>${y+543}</span>`;
-  const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const cells=[];
-  for(let i=0;i<first.getDay();i++){const d=new Date(y,m,-first.getDay()+1+i);cells.push({date:fmt(d),cur:false});}
-  for(let d=1;d<=last.getDate();d++)cells.push({date:`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,cur:true});
-  const rem=(7-cells.length%7)%7;
-  for(let i=1;i<=rem;i++){const d=new Date(y,m+1,i);cells.push({date:fmt(d),cur:false});}
-  document.getElementById('cal-days').innerHTML=cells.map(c=>{
-    const dt=tasks.filter(t=>t.due===c.date);
-    const dow=new Date(c.date+'T00:00:00').getDay();
-    const chips=dt.slice(0,3).map(t=>`<div class="c-chip ${chipCls(t)}" title="${t.name}">${t.name}</div>`).join('');
-    const more=dt.length>3?`<div class="c-more">+${dt.length-3}</div>`:'';
-    return`<div class="cal-cell ${!c.cur?'other-month':''} ${c.date===todayStr?'is-today':''} ${c.date===selDate?'selected':''} ${dt.some(t=>isOverdue(t))?'has-overdue':''} ${dow===0?'sunday':''}" onclick="selectDate('${c.date}')">
-      <div class="cell-num">${+c.date.split('-')[2]}</div>
-      <div class="cell-chips">${chips}${more}</div>
-    </div>`;
-  }).join('');
-}
-
-function selectDate(d){selDate=d;renderCalendar();renderDayPanel();}
-
-function renderDayPanel(){
-  document.getElementById('day-panel').style.display='block';
-  document.getElementById('dp-title').textContent=fmtThai(selDate);
-  const d=daysUntil(selDate);
-  document.getElementById('dp-sub').textContent=selDate===todayStr?'วันนี้':d===1?'พรุ่งนี้':d===-1?'เมื่อวาน':d>0?`อีก ${d} วัน`:`${Math.abs(d)} วันที่แล้ว`;
-  const dt=tasks.filter(t=>t.due===selDate);
-  if(!dt.length){document.getElementById('dp-body').innerHTML=`<div class="no-tasks"><div class="no-tasks-icon">✦</div>ยังไม่มีงานวันนี้<br><small style="color:var(--text3)">กด "+ เพิ่มงาน" เพื่อเริ่ม</small></div>`;return;}
-  document.getElementById('dp-body').innerHTML=dt.map(t=>`
-    <div class="task-row ${t.status==='done'?'row-done':''}">
-      <div class="row-check" onclick="toggleDone(${t.id})">${t.status==='done'?'✓':''}</div>
-      <div class="row-left">
-        <div class="row-name">${t.name}${t.note?` <span style="color:var(--text3);font-weight:400;font-size:11px">— ${t.note}</span>`:''}</div>
-        <div class="row-tags">
-          <span class="tag ${typeTagCls[t.type]}">${typeNames[t.type]}</span>
-          ${statusTag(t)}
-          ${isOverdue(t)?'<span class="tag tag-overdue">⚠ เกิน</span>':''}
+  {/* SIDEBAR */}
+  {sidebarOpen && (
+    <div style={{ position:"fixed", inset:0, zIndex:100 }}>
+      <div onClick={() => setSidebarOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.65)", backdropFilter:"blur(5px)" }} />
+      <div style={{ position:"absolute", right:0, top:0, bottom:0, width:340, background:"#15172A", borderLeft:"1px solid #22263A", padding:28, overflowY:"auto", animation:"slideIn 0.25s ease" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+          <h2 style={{ margin:0, fontSize:17, fontWeight:700 }}>📝 บันทึกรายการใหม่</h2>
+          <button onClick={() => setSidebarOpen(false)} style={{ background:"none", border:"none", color:"#4A5068", fontSize:22, cursor:"pointer", lineHeight:1 }}>✕</button>
         </div>
+
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:11, color:"#4A5068", fontWeight:500, textTransform:"uppercase", letterSpacing:0.6, marginBottom:8 }}>ประเภท</div>
+          <div style={{ display:"flex", gap:8 }}>
+            {TYPES.map(t => (
+              <button key={t} onClick={() => setForm(f => ({...f, type:t}))}
+                style={{ flex:1, padding:"10px 0", borderRadius:9, border:"none", cursor:"pointer", fontFamily:"'IBM Plex Sans Thai', sans-serif", fontWeight:600, fontSize:14,
+                  background: form.type === t ? (t==="รายรับ" ? "#4ECDC4":"#FF6B6B") : "#1C1F2E",
+                  color: form.type === t ? "#11131F":"#64748B", transition:"all 0.15s" }}>
+                {t === "รายรับ" ? "📈 รายรับ":"📉 รายจ่าย"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {[
+          { label:"วันที่",           el:<input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={inputSt} /> },
+          { label:"หมวดหมู่",         el:<select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} style={inputSt}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select> },
+          { label:"จำนวนเงิน (บาท)", el:<input type="number" min="0" placeholder="0.00" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} style={inputSt} /> },
+          { label:"รายละเอียด",       el:<input type="text" placeholder="ระบุรายละเอียด..." value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={inputSt} /> },
+        ].map(({label,el}) => (
+          <div key={label} style={{ marginBottom:16 }}>
+            <div style={{ fontSize:11, color:"#4A5068", fontWeight:500, textTransform:"uppercase", letterSpacing:0.6, marginBottom:6 }}>{label}</div>
+            {el}
+          </div>
+        ))}
+
+        <button className="btn-add" onClick={handleAdd}
+          style={{ width:"100%", marginTop:8, padding:"13px 0", background:"linear-gradient(135deg,#4ECDC4,#45B7D1)", color:"#11131F", border:"none", borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'IBM Plex Sans Thai', sans-serif", cursor:"pointer" }}>
+          เพิ่มรายการ ✓
+        </button>
+        {flash && <div style={{ marginTop:12, textAlign:"center", color:"#4ECDC4", fontSize:14 }}>✅ บันทึกสำเร็จ!</div>}
       </div>
-      <div class="row-prog">
-        <div class="mini-track"><div class="mini-fill" style="width:${t.pct}%"></div></div>
-        <span class="pct-num">${t.pct}%</span>
+    </div>
+  )}
+
+  <main style={{ maxWidth:1200, margin:"0 auto", padding:"28px 20px" }}>
+    {expenses.length === 0 ? (
+      <div style={{ textAlign:"center", padding:"80px 0", color:"#4A5068" }}>
+        <div style={{ fontSize:56, marginBottom:16 }}>📭</div>
+        <div style={{ fontSize:18, fontWeight:600, marginBottom:8, color:"#64748B" }}>ยังไม่มีข้อมูลในระบบ</div>
+        <div style={{ fontSize:14 }}>เริ่มบันทึกรายการแรกของคุณโดยกดปุ่ม "บันทึกรายการ"</div>
       </div>
-      <div class="row-actions">
-        <button class="row-btn edit" onclick="openEditModal(${t.id})" title="แก้ไข">✎</button>
-        <button class="row-btn del" onclick="deleteTask(${t.id})" title="ลบ">✕</button>
-      </div>
-    </div>`).join('');
+    ) : (
+      <>
+        {/* KPI */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24 }}>
+          <KpiCard label="รายรับ"   value={`฿${fmt(income)}`}           icon="📈" accent="#4ECDC4" sub={`${monthly.filter(e=>e.type==="รายรับ").length} รายการ`}  delay="0ms"   />
+          <KpiCard label="รายจ่าย" value={`฿${fmt(expense)}`}          icon="📉" accent="#FF6B6B" sub={`${monthly.filter(e=>e.type==="รายจ่าย").length} รายการ`} delay="80ms"  />
+          <KpiCard label="คงเหลือ" value={`฿${fmt(Math.abs(balance))}`} icon={balance>=0?"💰":"⚠️"} accent={balance>=0?"#98D8C8":"#FFA07A"} sub={balance>=0?"เงินเหลือ":"รายจ่ายเกินรายรับ"} delay="160ms" />
+        </div>
+
+        {/* PROGRESS */}
+        {income > 0 && (
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"18px 22px", marginBottom:24 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10, fontSize:13, color:"#64748B" }}>
+              <span>สัดส่วนรายรับ vs รายจ่าย</span>
+              <span style={{ fontFamily:"'IBM Plex Mono', monospace", color: balance>=0?"#4ECDC4":"#FF6B6B" }}>
+                {balance>=0?"+":"-"}฿{fmt(Math.abs(balance))}
+              </span>
+            </div>
+            <div style={{ background:"#1C1F2E", borderRadius:99, height:12, overflow:"hidden", display:"flex" }}>
+              <div style={{ width:`${Math.min((expense/income)*100,100)}%`, background:"linear-gradient(90deg,#FF6B6B,#FFA07A)", transition:"width 0.5s ease" }} />
+              <div style={{ flex:1, background:"rgba(78,205,196,0.2)" }} />
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, fontSize:11, color:"#4A5068" }}>
+              <span>รายจ่าย {((expense/income)*100).toFixed(1)}%</span>
+              <span>รายรับ 100%</span>
+            </div>
+          </div>
+        )}
+
+        {/* CHARTS */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"20px 18px" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>สัดส่วนรายจ่าย</h3>
+            {pieData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={75} innerRadius={42} stroke="none" paddingAngle={2}>
+                      {pieData.map((d,i) => <Cell key={i} fill={d.color} />)}
+                    </Pie>
+                    <Tooltip formatter={v=>[`฿${fmt(v)}`,""]} contentStyle={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, fontSize:12, fontFamily:"'IBM Plex Sans Thai', sans-serif" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"6px 14px", marginTop:4 }}>
+                  {pieData.map(d => (
+                    <div key={d.name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#94A3B8" }}>
+                      <span style={{ width:8, height:8, borderRadius:2, background:d.color, display:"inline-block" }} />
+                      {d.name}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : <div style={{ height:180, display:"flex", alignItems:"center", justifyContent:"center", color:"#4A5068", fontSize:14 }}>ไม่มีข้อมูลรายจ่าย</div>}
+          </div>
+
+          <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, padding:"20px 18px" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>รายรับ-รายจ่าย ตามหมวดหมู่</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} margin={{ top:4, right:4, bottom:0, left:-10 }}>
+                <XAxis dataKey="cat" tick={{ fill:"#64748B", fontSize:11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill:"#4A5068", fontSize:10 }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={v=>[`฿${fmt(v)}`,""]} contentStyle={{ background:"#1C1F2E", border:"1px solid #2E3350", borderRadius:8, fontSize:12, fontFamily:"'IBM Plex Sans Thai', sans-serif" }} />
+                <Legend wrapperStyle={{ fontSize:12, color:"#64748B" }} />
+                <Bar dataKey="รายรับ"   fill="#4ECDC4" radius={[4,4,0,0]} maxBarSize={28} />
+                <Bar dataKey="รายจ่าย" fill="#FF6B6B" radius={[4,4,0,0]} maxBarSize={28} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div className="card-anim" style={{ background:"#15172A", border:"1px solid #22263A", borderRadius:14, overflow:"hidden" }}>
+          <div style={{ padding:"16px 22px", borderBottom:"1px solid #22263A", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <h3 style={{ margin:0, fontSize:14, fontWeight:600, color:"#94A3B8", textTransform:"uppercase", letterSpacing:0.6 }}>รายการล่าสุด — {monthLabel(selectedMonth)}</h3>
+            <span style={{ fontSize:11, color:"#4A5068", fontFamily:"'IBM Plex Mono', monospace" }}>{monthly.length} รายการ</span>
+          </div>
+          {monthly.length === 0 ? (
+            <div style={{ padding:"40px 0", textAlign:"center", color:"#4A5068", fontSize:14 }}>ไม่มีรายการในเดือนนี้</div>
+          ) : (
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                <thead>
+                  <tr style={{ background:"#12142080" }}>
+                    {["วันที่","ประเภท","หมวดหมู่","รายละเอียด","จำนวนเงิน",""].map(h => (
+                      <th key={h} style={{ padding:"10px 16px", textAlign:h==="จำนวนเงิน"?"right":"left", color:"#4A5068", fontWeight:500, fontSize:11, textTransform:"uppercase", letterSpacing:0.5, whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...monthly].sort((a,b)=>b.date.localeCompare(a.date)).map((e,i) => (
+                    <tr key={e.id} className="row-hover" style={{ borderTop:"1px solid #1C1F2E" }}>
+                      <td style={{ padding:"11px 16px", color:"#64748B", fontFamily:"'IBM Plex Mono', monospace", fontSize:12, whiteSpace:"nowrap" }}>{e.date}</td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <span className={e.type==="รายรับ"?"pill-income":"pill-expense"} style={{ padding:"3px 10px", borderRadius:99, fontSize:11, fontWeight:600 }}>
+                          {e.type==="รายรับ"?"📈":"📉"} {e.type}
+                        </span>
+                      </td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <span style={{ display:"inline-flex", alignItems:"center", gap:6, background:`${CAT_COLORS[e.category]||"#aaa"}22`, color:CAT_COLORS[e.category]||"#aaa", padding:"3px 10px", borderRadius:99, fontSize:11, fontWeight:600 }}>
+                          {e.category}
+                        </span>
+                      </td>
+                      <td style={{ padding:"11px 16px", color:"#CBD5E1" }}>{e.description || <span style={{ color:"#2E3350" }}>—</span>}</td>
+                      <td style={{ padding:"11px 16px", textAlign:"right", fontFamily:"'IBM Plex Mono', monospace", fontWeight:700, color:e.type==="รายรับ"?"#4ECDC4":"#FF6B6B", whiteSpace:"nowrap" }}>
+                        {e.type==="รายรับ"?"+":"-"}฿{fmt(e.amount)}
+                      </td>
+                      <td style={{ padding:"11px 16px" }}>
+                        <button onClick={()=>handleDelete(e.id)} style={{ background:"rgba(255,107,107,0.1)", border:"1px solid rgba(255,107,107,0.2)", color:"#FF6B6B", borderRadius:6, padding:"4px 10px", fontSize:11, cursor:"pointer", fontFamily:"'IBM Plex Sans Thai', sans-serif" }}>ลบ</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop:"2px solid #22263A", background:"#12142080" }}>
+                    <td colSpan={4} style={{ padding:"12px 16px", color:"#64748B", fontSize:12, fontWeight:600 }}>คงเหลือสุทธิ</td>
+                    <td style={{ padding:"12px 16px", textAlign:"right", fontFamily:"'IBM Plex Mono', monospace", fontWeight:700, fontSize:15, color:balance>=0?"#4ECDC4":"#FF6B6B" }}>
+                      {balance>=0?"+":"-"}฿{fmt(Math.abs(balance))}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      </>
+    )}
+  </main>
+</div>
+```
+
+);
 }
 
-function statusTag(t){
-  if(t.status==='done')return'<span class="tag tag-done">✓ เสร็จ</span>';
-  if(t.status==='inprog')return'<span class="tag tag-inprog">⟳ กำลังทำ</span>';
-  return'<span class="tag tag-todo">○ รอทำ</span>';
+function KpiCard({ label, value, icon, accent, sub, delay }) {
+return (
+<div className=“card-anim” style={{ background:”#15172A”, border:`1px solid ${accent}28`, borderRadius:14, padding:“20px 22px”, position:“relative”, overflow:“hidden”, animationDelay:delay }}>
+<div style={{ position:“absolute”, right:18, top:18, fontSize:30, opacity:0.12 }}>{icon}</div>
+<div style={{ fontSize:11, color:”#4A5068”, marginBottom:8, textTransform:“uppercase”, letterSpacing:0.6 }}>{label}</div>
+<div style={{ fontSize:24, fontWeight:700, color:”#F1F5F9”, fontFamily:”‘IBM Plex Mono’, monospace”, marginBottom:5, letterSpacing:-0.5 }}>{value}</div>
+<div style={{ fontSize:12, color:accent, fontWeight:500 }}>{sub}</div>
+<div style={{ position:“absolute”, bottom:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${accent}88,transparent)` }} />
+</div>
+);
 }
-function toggleDone(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.status=t.status==='done'?'todo':'done';t.pct=t.status==='done'?100:0;save();renderAll();}
-function deleteTask(id){tasks=tasks.filter(x=>x.id!==id);save();renderAll();}
-function prevMonth(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}renderAll();}
-function nextMonth(){curMonth++;if(curMonth>11){curMonth=0;curYear++;}renderAll();}
-function goToday(){curYear=today.getFullYear();curMonth=today.getMonth();selDate=todayStr;renderAll();}
-
-function openModal(date){
-  editId=null;
-  document.getElementById('modal-title-text').textContent='เพิ่มงานใหม่ ✦';
-  document.getElementById('f-name').value='';
-  document.getElementById('f-type').value='daily';
-  document.getElementById('f-status').value='todo';
-  document.getElementById('f-due').value=date||selDate||todayStr;
-  document.getElementById('f-pct').value=0;
-  document.getElementById('f-note').value='';
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('f-name').focus(),100);
-}
-function openModalForSelected(){openModal(selDate);}
-function openEditModal(id){
-  const t=tasks.find(x=>x.id===id);if(!t)return;
-  editId=id;
-  document.getElementById('modal-title-text').textContent='แก้ไขงาน ✦';
-  document.getElementById('f-name').value=t.name;
-  document.getElementById('f-type').value=t.type;
-  document.getElementById('f-status').value=t.status;
-  document.getElementById('f-due').value=t.due||'';
-  document.getElementById('f-pct').value=t.pct;
-  document.getElementById('f-note').value=t.note||'';
-  document.getElementById('modal-overlay').classList.remove('hidden');
-}
-function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
-function saveTask(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name){document.getElementById('f-name').focus();return;}
-  const type=document.getElementById('f-type').value,status=document.getElementById('f-status').value,
-    due=document.getElementById('f-due').value,
-    pct=Math.min(100,Math.max(0,parseInt(document.getElementById('f-pct').value)||0)),
-    note=document.getElementById('f-note').value.trim();
-  if(editId){Object.assign(tasks.find(x=>x.id===editId),{name,type,status,due,pct,note});}
-  else tasks.unshift({id:nextId++,name,type,due,pct,status,note});
-  save();closeModal();renderAll();
-}
-function updateClock(){
-  const n=new Date();
-  document.getElementById('clock-time').textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('clock-date').textContent=fmtThai(todayStr);
-}
-function renderAll(){renderCalendar();renderSidebar();if(selDate)renderDayPanel();}
-
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-document.getElementById('f-name').addEventListener('keydown',e=>{if(e.key==='Enter')saveTask();});
-
-updateClock();setInterval(updateClock,30000);
-selectDate(todayStr);renderAll();
-</script>
-
-</body>
-</html>
